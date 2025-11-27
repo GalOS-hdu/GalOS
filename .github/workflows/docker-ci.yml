@@ -40,19 +40,19 @@ jobs:
       run: |
         docker-compose build --build-arg BUILDKIT_INLINE_CACHE=1
 
-    - name: Build StarryOS for ${{ matrix.arch }}
+    - name: Build GalOS for ${{ matrix.arch }}
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "make ARCH=${{ matrix.arch }} build"
 
     - name: Prepare rootfs for ${{ matrix.arch }}
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "make ARCH=${{ matrix.arch }} img"
 
     - name: Run CI tests for ${{ matrix.arch }}
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "python3 scripts/ci-test.py ${{ matrix.arch }}"
       timeout-minutes: 10
 
@@ -85,7 +85,7 @@ jobs:
 
     - name: Verify environment
       run: |
-        docker-compose run --rm starryos-dev bash -c "
+        docker-compose run --rm galos-dev bash -c "
           rustc --version && \
           qemu-system-riscv64 --version && \
           qemu-system-loongarch64 --version && \

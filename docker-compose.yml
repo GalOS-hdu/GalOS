@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  starryos-dev:
+  galos-dev:
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,22 +12,22 @@ services:
         USERNAME: starry
         USER_UID: 1000
         USER_GID: 1000
-    image: starryos-dev:latest
-    container_name: starryos-dev
-    hostname: starryos-dev
+    image: galos-dev:latest
+    container_name: galos-dev
+    hostname: galos-dev
 
     # Volume mounts
     volumes:
       # Mount project directory
-      - .:/workspace/StarryOS
+      - .:/workspace/GalOS
       # Persistent cargo cache
       - cargo-cache:/usr/local/cargo/registry
       - cargo-git-cache:/usr/local/cargo/git
       # Persistent target directory (optional, for faster rebuilds)
-      - target-cache:/workspace/StarryOS/target
+      - target-cache:/workspace/GalOS/target
 
     # Working directory
-    working_dir: /workspace/StarryOS
+    working_dir: /workspace/GalOS
 
     # Keep container running
     stdin_open: true
@@ -64,18 +64,18 @@ services:
     #       memory: 8G
 
   # CI test environment (lightweight, no volumes)
-  starryos-ci:
+  galos-ci:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         QEMU_VERSION: "10.2.0"
         RUST_VERSION: "nightly-2025-05-20"
-    image: starryos-ci:latest
-    container_name: starryos-ci
-    working_dir: /workspace/StarryOS
+    image: galos-ci:latest
+    container_name: galos-ci
+    working_dir: /workspace/GalOS
     volumes:
-      - .:/workspace/StarryOS
+      - .:/workspace/GalOS
     command: /bin/bash -c "make build && make img && python3 scripts/ci-test.py riscv64"
     profiles:
       - ci

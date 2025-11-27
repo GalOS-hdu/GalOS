@@ -1,6 +1,6 @@
-# StarryOS 开发环境依赖清单
+# GalOS 开发环境依赖清单
 
-本文档详细列出 StarryOS 项目所需的所有开发和测试环境依赖，以确保团队成员环境统一。
+本文档详细列出 GalOS 项目所需的所有开发和测试环境依赖，以确保团队成员环境统一。
 
 ## 📋 依赖概览
 
@@ -112,7 +112,7 @@ sudo apt install make cmake
 
 ### 4. 交叉编译工具链（Musl）
 
-StarryOS 使用 Musl C 库进行交叉编译，需要安装以下工具链：
+GalOS 使用 Musl C 库进行交叉编译，需要安装以下工具链：
 
 #### RISC-V 64 Musl 工具链（必需）
 
@@ -242,7 +242,7 @@ qemu-system-loongarch64 --version
 
 ```bash
 docker-compose build
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 ```
 
 参见 [Docker 开发环境指南](./docker-guide.md)。
@@ -251,7 +251,7 @@ docker-compose run --rm starryos-dev
 
 ### 6. Rootfs 文件系统
 
-StarryOS 需要一个包含 BusyBox 的根文件系统镜像。
+GalOS 需要一个包含 BusyBox 的根文件系统镜像。
 
 | 属性 | 值 |
 |------|-----|
@@ -409,7 +409,7 @@ echo ""
 echo "Next steps:"
 echo "1. Run: source ~/.bashrc"
 echo "2. Verify: rustc --version && qemu-system-riscv64 --version"
-echo "3. Clone project: git clone --recursive https://github.com/Starry-OS/StarryOS.git"
+echo "3. Clone project: git clone --recursive https://github.com/Starry-OS/GalOS.git"
 ```
 
 ### 使用 Docker（推荐）
@@ -418,18 +418,18 @@ echo "3. Clone project: git clone --recursive https://github.com/Starry-OS/Starr
 #!/bin/bash
 set -e
 
-echo "===== Cloning StarryOS project ====="
-git clone --recursive https://github.com/Starry-OS/StarryOS.git
-cd StarryOS
+echo "===== Cloning GalOS project ====="
+git clone --recursive https://github.com/Starry-OS/GalOS.git
+cd GalOS
 
 echo "===== Building Docker image ====="
 docker-compose build
 
 echo "===== Starting development environment ====="
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 
 echo "===== Inside container, run: ====="
-echo "  make build         # Build StarryOS"
+echo "  make build         # Build GalOS"
 echo "  make img           # Download rootfs"
 echo "  make run           # Run on QEMU"
 ```
@@ -452,7 +452,7 @@ export PATH=/opt/riscv64-linux-musl-cross/bin:$PATH
 # QEMU (if compiled from source)
 export PATH=/opt/qemu/bin:$PATH
 
-# StarryOS build options (optional)
+# GalOS build options (optional)
 export ARCH=riscv64
 export LOG=warn
 export BACKTRACE=y
@@ -482,7 +482,7 @@ export BACKTRACE=y
 
 | 问题 | 可能原因 | 解决方案 |
 |------|----------|----------|
-| `rustc` 版本不正确 | 未安装正确版本 | 运行 `cd StarryOS && rustup show` |
+| `rustc` 版本不正确 | 未安装正确版本 | 运行 `cd GalOS && rustup show` |
 | 找不到 `cargo-axplat` | 未安装或未添加到 PATH | `cargo install cargo-axplat --version 0.2.2` |
 | QEMU LoongArch64 启动失败 | QEMU 版本低于 10.0 | 从源码编译 QEMU 10+ 或使用 Docker |
 | `riscv64-linux-musl-gcc` 找不到 | Musl 工具链未安装或 PATH 未配置 | 检查安装步骤和 PATH 设置 |
@@ -494,11 +494,11 @@ export BACKTRACE=y
 
 - [Rust 官方安装指南](https://www.rust-lang.org/tools/install)
 - [QEMU 官方下载](https://www.qemu.org/download/)
-- [StarryOS Docker 指南](./docker-guide.md)
+- [GalOS Docker 指南](./docker-guide.md)
 - [ArceOS Musl 工具链](https://github.com/arceos-org/setup-musl)
-- [StarryOS 项目主页](https://github.com/Starry-OS/StarryOS)
+- [GalOS 项目主页](https://github.com/Starry-OS/GalOS)
 
 ---
 
 **最后更新**：2025-11-26
-**维护者**：StarryOS Team
+**维护者**：GalOS Team

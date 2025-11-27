@@ -7,19 +7,19 @@
 ### 1️⃣ 在 GitHub 创建空仓库
 
 - 进入你的 Organization
-- 创建名为 `StarryOS` 的**空仓库**（不要添加 README/LICENSE）
-- 记下仓库地址：`git@github.com:YOUR_ORG/StarryOS.git`
+- 创建名为 `GalOS` 的**空仓库**（不要添加 README/LICENSE）
+- 记下仓库地址：`git@github.com:YOUR_ORG/GalOS.git`
 
 ### 2️⃣ 配置本地 Git
 
 ```bash
-cd /home/c20h30o2/files/StarryOS
+cd /home/c20h30o2/files/GalOS
 
 # 重命名当前 origin 为 upstream
 git remote rename origin upstream
 
 # 添加团队仓库为新的 origin（替换 YOUR_ORG）
-git remote add origin git@github.com:YOUR_ORG/StarryOS.git
+git remote add origin git@github.com:YOUR_ORG/GalOS.git
 
 # 验证
 git remote -v
@@ -84,14 +84,14 @@ git push --tags
 
 ## ✅ 验证上传成功
 
-1. **访问 GitHub 仓库**：`https://github.com/YOUR_ORG/StarryOS`
+1. **访问 GitHub 仓库**：`https://github.com/YOUR_ORG/GalOS`
 2. **检查文件**：确认所有文件已上传
 3. **检查子模块**：`arceos` 应显示为链接（不是目录）
 4. **测试克隆**：
    ```bash
    cd /tmp
-   git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
-   cd StarryOS
+   git clone --recursive git@github.com:YOUR_ORG/GalOS.git
+   cd GalOS
    ls -la
    ```
 
@@ -114,13 +114,13 @@ git status --ignored | grep -E "\.(img|xz)$"
 
 团队成员克隆时必须使用：
 ```bash
-git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
+git clone --recursive git@github.com:YOUR_ORG/GalOS.git
 ```
 
 或者：
 ```bash
-git clone git@github.com:YOUR_ORG/StarryOS.git
-cd StarryOS
+git clone git@github.com:YOUR_ORG/GalOS.git
+cd GalOS
 git submodule update --init --recursive
 ```
 
@@ -213,12 +213,12 @@ git submodule update --init --recursive
 
 ```bash
 # 克隆仓库
-git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
-cd StarryOS
+git clone --recursive git@github.com:YOUR_ORG/GalOS.git
+cd GalOS
 
 # 使用 Docker 开发
 docker-compose build
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 
 # 在容器内
 make build

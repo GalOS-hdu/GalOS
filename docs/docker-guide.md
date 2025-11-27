@@ -1,6 +1,6 @@
-# StarryOS Docker 开发环境指南
+# GalOS Docker 开发环境指南
 
-本指南介绍如何使用 Docker 容器化环境进行 StarryOS 的开发和测试。
+本指南介绍如何使用 Docker 容器化环境进行 GalOS 的开发和测试。
 
 ## 目录
 
@@ -35,7 +35,7 @@ Docker 镜像已包含以下所有依赖，确保团队开发环境一致：
 
 ### QEMU 版本说明
 
-**关键点**：StarryOS 在 LoongArch64 架构上需要 **QEMU 10.0+**，而大多数 Linux 发行版默认 QEMU 版本较低：
+**关键点**：GalOS 在 LoongArch64 架构上需要 **QEMU 10.0+**，而大多数 Linux 发行版默认 QEMU 版本较低：
 
 - Ubuntu 24.04: QEMU 8.2.2 ❌
 - Debian 12: QEMU 7.2 ❌
@@ -74,7 +74,7 @@ Docker 镜像已包含以下所有依赖，确保团队开发环境一致：
 ### 目录结构
 
 ```
-StarryOS/
+GalOS/
 ├── Dockerfile                 # 主构建文件
 ├── docker-compose.yml         # Docker Compose 配置
 ├── .dockerignore             # Docker 忽略文件
@@ -99,14 +99,14 @@ StarryOS/
 #### 方法一：使用 Docker Compose（推荐）
 
 ```bash
-# 在 StarryOS 项目根目录下
+# 在 GalOS 项目根目录下
 docker-compose build
 ```
 
 #### 方法二：使用 Docker 命令
 
 ```bash
-docker build -t starryos-dev:latest .
+docker build -t galos-dev:latest .
 ```
 
 **注意**：首次构建需要 20-40 分钟（编译 QEMU）。
@@ -117,21 +117,21 @@ docker build -t starryos-dev:latest .
 
 ```bash
 # 启动并进入容器
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 
 # 或者后台运行
-docker-compose up -d starryos-dev
-docker-compose exec starryos-dev bash
+docker-compose up -d galos-dev
+docker-compose exec galos-dev bash
 ```
 
 #### 方法二：使用 Docker 命令
 
 ```bash
 docker run -it --rm \
-  -v $(pwd):/workspace/StarryOS \
+  -v $(pwd):/workspace/GalOS \
   -v starryos-cargo-cache:/usr/local/cargo/registry \
-  -w /workspace/StarryOS \
-  starryos-dev:latest
+  -w /workspace/GalOS \
+  galos-dev:latest
 ```
 
 ### 3. 验证环境
@@ -168,11 +168,11 @@ rustup target list --installed
 
 ```bash
 # 在宿主机上
-git clone --recursive https://github.com/Starry-OS/StarryOS.git
-cd StarryOS
+git clone --recursive https://github.com/Starry-OS/GalOS.git
+cd GalOS
 
 # 启动容器
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 ```
 
 #### 2. 在容器内构建项目
@@ -196,7 +196,7 @@ make img
 make img ARCH=riscv64
 ```
 
-#### 4. 运行 StarryOS
+#### 4. 运行 GalOS
 
 ```bash
 # RISC-V 64
@@ -230,7 +230,7 @@ python3 scripts/ci-test.py loongarch64
 
 ```bash
 # 运行 CI 测试
-docker-compose --profile ci run --rm starryos-ci
+docker-compose --profile ci run --rm galos-ci
 ```
 
 #### GitHub Actions 示例
@@ -257,17 +257,17 @@ jobs:
 
     - name: Run build
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "make ARCH=${{ matrix.arch }} build"
 
     - name: Prepare rootfs
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "make ARCH=${{ matrix.arch }} img"
 
     - name: Run tests
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "python3 scripts/ci-test.py ${{ matrix.arch }}"
 ```
 
@@ -292,8 +292,8 @@ devices:
 docker run -it --rm \
   --device /dev/kvm \
   --privileged \
-  -v $(pwd):/workspace/StarryOS \
-  starryos-dev:latest
+  -v $(pwd):/workspace/GalOS \
+  galos-dev:latest
 ```
 
 ### 自定义用户 UID/GID
@@ -304,7 +304,7 @@ docker run -it --rm \
 docker build \
   --build-arg USER_UID=$(id -u) \
   --build-arg USER_GID=$(id -g) \
-  -t starryos-dev:latest .
+  -t galos-dev:latest .
 ```
 
 或在 `docker-compose.yml` 中修改：
@@ -320,7 +320,7 @@ args:
 ```bash
 docker build \
   --build-arg QEMU_VERSION=10.1.0 \
-  -t starryos-dev:qemu10.1 .
+  -t galos-dev:qemu10.1 .
 ```
 
 ### 资源限制
@@ -344,9 +344,9 @@ deploy:
 
 ```bash
 docker run -it --rm \
-  -v $(pwd):/workspace/StarryOS \
+  -v $(pwd):/workspace/GalOS \
   -v /path/to/aarch64-linux-musl-cross:/opt/musl-toolchains/aarch64-linux-musl-cross \
-  starryos-dev:latest
+  galos-dev:latest
 ```
 
 ---
@@ -451,23 +451,23 @@ docker-compose build --no-cache
 
 ```bash
 # 导出镜像
-docker save starryos-dev:latest | gzip > starryos-dev.tar.gz
+docker save galos-dev:latest | gzip > galos-dev.tar.gz
 
 # 在其他机器上导入
-gunzip -c starryos-dev.tar.gz | docker load
+gunzip -c galos-dev.tar.gz | docker load
 ```
 
 #### 方案二：使用私有镜像仓库
 
 ```bash
 # 标记镜像
-docker tag starryos-dev:latest registry.example.com/starryos-dev:latest
+docker tag galos-dev:latest registry.example.com/galos-dev:latest
 
 # 推送到私有仓库
-docker push registry.example.com/starryos-dev:latest
+docker push registry.example.com/galos-dev:latest
 
 # 团队成员拉取
-docker pull registry.example.com/starryos-dev:latest
+docker pull registry.example.com/galos-dev:latest
 ```
 
 ---

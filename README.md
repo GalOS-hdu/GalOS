@@ -1,4 +1,4 @@
-# Starry OS
+# GalOS
 
 ## Quick Start
 
@@ -25,14 +25,14 @@ $ sudo apt install -y build-essential cmake clang qemu-system
 ### 3. Clone repo
 
 ```bash
-$ git clone --recursive https://github.com/Starry-OS/StarryOS.git
-$ cd StarryOS
+$ git clone --recursive https://github.com/Starry-OS/GalOS.git
+$ cd GalOS
 ```
 
 Or if you have already cloned it with out `--recursive` option:
 
 ```bash
-$ cd StarryOS
+$ cd GalOS
 $ git submodule update --init --recursive
 ```
 
@@ -45,7 +45,7 @@ $ git submodule update --init --recursive
 $ export RUSTUP_DIST_SERVER=
 
 # Automatically download components via rustup
-$ cd StarryOS
+$ cd GalOS
 $ rustup target list --installed
 ```
 
@@ -69,7 +69,7 @@ $ make img ARCH=riscv64
 $ make img ARCH=loongarch64
 ```
 
-This will download rootfs image from [GitHub Releases](https://github.com/Starry-OS/StarryOS/releases) and setup the disk file for running on QEMU.
+This will download rootfs image from [GitHub Releases](https://github.com/Starry-OS/GalOS/releases) and setup the disk file for running on QEMU.
 
 ### 7. Run on QEMU
 

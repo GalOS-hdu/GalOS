@@ -1,6 +1,6 @@
 # 📋 上传前检查清单
 
-**项目**：StarryOS
+**项目**：GalOS
 **日期**：______________________
 **负责人**：______________________
 
@@ -145,7 +145,7 @@ docker-compose build
 ### 功能验证（可选）
 
 ```bash
-docker-compose run --rm starryos-dev bash -c "make build"
+docker-compose run --rm galos-dev bash -c "make build"
 ```
 
 - [ ] RISC-V 64 构建成功
@@ -214,7 +214,7 @@ git status
 
 ```bash
 git remote rename origin upstream
-git remote add origin git@github.com:YOUR_ORG/StarryOS.git
+git remote add origin git@github.com:YOUR_ORG/GalOS.git
 ```
 
 - [ ] 远程仓库重命名成功
@@ -261,7 +261,7 @@ git push -u origin main
 ```bash
 mv .git .git.backup
 git init
-git remote add origin git@github.com:YOUR_ORG/StarryOS.git
+git remote add origin git@github.com:YOUR_ORG/GalOS.git
 ```
 
 - [ ] 旧 .git 已备份
@@ -305,7 +305,7 @@ git push -u origin main
 
 ### GitHub 仓库检查
 
-在浏览器中访问：`https://github.com/YOUR_ORG/StarryOS`
+在浏览器中访问：`https://github.com/YOUR_ORG/GalOS`
 
 - [ ] 仓库可访问
 - [ ] 所有文件已正确显示
@@ -319,8 +319,8 @@ git push -u origin main
 
 ```bash
 cd /tmp
-git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
-cd StarryOS
+git clone --recursive git@github.com:YOUR_ORG/GalOS.git
+cd GalOS
 ls -la
 ```
 
@@ -332,7 +332,7 @@ ls -la
 
 ```bash
 docker-compose build
-docker-compose run --rm starryos-dev bash -c "rustc --version"
+docker-compose run --rm galos-dev bash -c "rustc --version"
 ```
 
 - [ ] 镜像构建成功
@@ -377,27 +377,27 @@ docker-compose run --rm starryos-dev bash -c "rustc --version"
 
 ### 准备通知内容
 
-**标题**：StarryOS 项目已上传到团队仓库
+**标题**：GalOS 项目已上传到团队仓库
 
 **内容模板**：
 ```
 Hi Team,
 
-StarryOS 项目已经上传到我们的 Organization 仓库：
-https://github.com/YOUR_ORG/StarryOS
+GalOS 项目已经上传到我们的 Organization 仓库：
+https://github.com/YOUR_ORG/GalOS
 
 ## 快速开始
 
 克隆仓库：
 ```bash
-git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
-cd StarryOS
+git clone --recursive git@github.com:YOUR_ORG/GalOS.git
+cd GalOS
 ```
 
 使用 Docker 开发环境：
 ```bash
 docker-compose build
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 ```
 
 ## 文档

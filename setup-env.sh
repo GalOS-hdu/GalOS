@@ -1,5 +1,5 @@
 #!/bin/bash
-# StarryOS Environment Setup Script
+# GalOS Environment Setup Script
 # This script helps set up the development environment for StarryOS
 
 set -e
@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}======================================${NC}"
-echo -e "${BLUE}  StarryOS Environment Setup${NC}"
+echo -e "${BLUE}  GalOS Environment Setup${NC}"
 echo -e "${BLUE}======================================${NC}"
 echo ""
 
@@ -91,7 +91,7 @@ case $choice in
         success "Docker image built successfully!"
         echo ""
         echo -e "${GREEN}Next steps:${NC}"
-        echo "  1. Start container: $COMPOSE_CMD run --rm starryos-dev"
+        echo "  1. Start container: $COMPOSE_CMD run --rm galos-dev"
         echo "  2. Inside container, run: make build && make img && make run"
         echo ""
         echo "For more information, see: docs/docker-guide.md"

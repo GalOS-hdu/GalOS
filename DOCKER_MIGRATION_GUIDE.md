@@ -1,4 +1,4 @@
-# StarryOS Docker 迁移指南
+# GalOS Docker 迁移指南
 
 本文档为团队提供项目 Docker 化的快速参考和行动指南。
 
@@ -34,7 +34,7 @@
 ### 🚨 最大痛点：QEMU 版本
 
 **问题**：
-- StarryOS 支持 LoongArch64 架构，**严格要求 QEMU 10.0+**
+- GalOS 支持 LoongArch64 架构，**严格要求 QEMU 10.0+**
 - 大多数 Linux 发行版的默认 QEMU 版本不满足要求：
   - Ubuntu 24.04: QEMU 8.2.2 ❌
   - Ubuntu 22.04: QEMU 7.2 ❌
@@ -67,9 +67,9 @@
 docker-compose build
 
 # 3. 启动开发环境
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 
-# 4. 在容器内构建和运行 StarryOS
+# 4. 在容器内构建和运行 GalOS
 make build
 make img
 make run          # RISC-V 64
@@ -186,21 +186,21 @@ riscv64-linux-musl-gcc --version
 ```bash
 # 构建并导出镜像
 docker-compose build
-docker save starryos-dev:latest | gzip > starryos-dev.tar.gz
+docker save galos-dev:latest | gzip > galos-dev.tar.gz
 
 # 团队成员导入
-gunzip -c starryos-dev.tar.gz | docker load
+gunzip -c galos-dev.tar.gz | docker load
 ```
 
 **方案 B：私有镜像仓库**（推荐，适合中大型团队）
 
 ```bash
 # 设置私有仓库（如 Harbor、GitLab Registry、AWS ECR）
-docker tag starryos-dev:latest registry.company.com/starryos-dev:latest
-docker push registry.company.com/starryos-dev:latest
+docker tag galos-dev:latest registry.company.com/galos-dev:latest
+docker push registry.company.com/galos-dev:latest
 
 # 团队成员拉取
-docker pull registry.company.com/starryos-dev:latest
+docker pull registry.company.com/galos-dev:latest
 ```
 
 ---
@@ -264,7 +264,7 @@ docker pull registry.company.com/starryos-dev:latest
    - 提供迁移指南（如有 Breaking Changes）
 
 4. **推送新镜像**：
-   - 标记版本：`docker tag starryos-dev:latest starryos-dev:v1.1.0`
+   - 标记版本：`docker tag galos-dev:latest galos-dev:v1.1.0`
    - 推送到镜像仓库
 
 ---
@@ -302,14 +302,14 @@ docker pull registry.company.com/starryos-dev:latest
 
 - **Docker 使用指南**：[docs/docker-guide.md](docs/docker-guide.md)（包含常见问题解答）
 - **环境依赖清单**：[docs/environment-requirements.md](docs/environment-requirements.md)
-- **StarryOS README**：[README.md](README.md)
+- **GalOS README**：[README.md](README.md)
 
 ### 故障排查
 
 **常见问题**：参见 [docker-guide.md - 常见问题](docs/docker-guide.md#常见问题)
 
 **联系方式**：
-- GitHub Issues：[https://github.com/Starry-OS/StarryOS/issues](https://github.com/Starry-OS/StarryOS/issues)
+- GitHub Issues：[https://github.com/Starry-OS/GalOS/issues](https://github.com/Starry-OS/GalOS/issues)
 - 团队内部沟通渠道（Slack/微信/钉钉等）
 
 ---
@@ -352,9 +352,9 @@ docker pull registry.company.com/starryos-dev:latest
 
 **下一步行动**：
 
-1. **立即尝试**：运行 `docker-compose build && docker-compose run --rm starryos-dev`
+1. **立即尝试**：运行 `docker-compose build && docker-compose run --rm galos-dev`
 2. **阅读文档**：[docs/docker-guide.md](docs/docker-guide.md)
 3. **团队讨论**：根据本指南制定迁移计划
 
 **文档生成日期**：2025-11-26
-**维护者**：StarryOS Team
+**维护者**：GalOS Team

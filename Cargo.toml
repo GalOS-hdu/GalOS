@@ -80,7 +80,7 @@ starry-core = { path = "./core" }
 starry-api = { path = "./api" }
 
 [package]
-name = "starry"
+name = "galos"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

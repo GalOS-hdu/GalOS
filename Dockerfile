@@ -1,4 +1,4 @@
-# StarryOS Development Environment
+# GalOS Development Environment
 # Multi-stage build for optimized image size
 
 # Stage 1: Build QEMU from source (needed for LoongArch64)
@@ -55,8 +55,8 @@ RUN wget https://github.com/arceos-org/setup-musl/releases/download/prebuilt/ris
 # Stage 3: Final development environment
 FROM ubuntu:24.04
 
-LABEL maintainer="StarryOS Team"
-LABEL description="StarryOS Development Environment with Rust, QEMU 10+, and Musl toolchains"
+LABEL maintainer="GalOS Team"
+LABEL description="GalOS Development Environment with Rust, QEMU 10+, and Musl toolchains"
 LABEL version="1.0"
 
 ENV DEBIAN_FRONTEND=noninteractive

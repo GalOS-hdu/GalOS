@@ -1,6 +1,6 @@
 # 上传项目到团队 GitHub Organization 指南
 
-本文档提供将 StarryOS 项目（包含 Docker 配置）上传到团队 GitHub Organization 仓库的完整步骤和注意事项。
+本文档提供将 GalOS 项目（包含 Docker 配置）上传到团队 GitHub Organization 仓库的完整步骤和注意事项。
 
 ## 📋 目录
 
@@ -17,7 +17,7 @@
 
 ### 项目信息
 
-- **当前仓库**：`Starry-OS/StarryOS`（上游原始仓库）
+- **当前仓库**：`Starry-OS/GalOS`（上游原始仓库）
 - **当前分支**：`main`
 - **提交历史**：保留了上游完整历史
 - **子模块**：`arceos` (commit: 4d1be13)
@@ -88,8 +88,8 @@
 2. 进入你的 Organization 页面
 3. 点击 "New repository"
 4. 填写仓库信息：
-   - **Repository name**: `StarryOS`（或自定义名称）
-   - **Description**: `StarryOS - A kernel based on ArceOS with Docker development environment`
+   - **Repository name**: `GalOS`（或自定义名称）
+   - **Description**: `GalOS - A kernel based on ArceOS with Docker development environment`
    - **Visibility**:
      - `Private`（推荐）：仅团队成员可见
      - `Public`：开源项目
@@ -103,27 +103,27 @@
 
 ```bash
 # 进入项目目录
-cd /home/c20h30o2/files/StarryOS
+cd /home/c20h30o2/files/GalOS
 
 # 查看当前远程仓库
 git remote -v
-# 输出: origin	git@github.com:Starry-OS/StarryOS.git (fetch)
-#       origin	git@github.com:Starry-OS/StarryOS.git (push)
+# 输出: origin	git@github.com:Starry-OS/GalOS.git (fetch)
+#       origin	git@github.com:Starry-OS/GalOS.git (push)
 
 # 重命名当前 origin 为 upstream（保留上游引用）
 git remote rename origin upstream
 
 # 添加团队仓库为新的 origin
 # 将下面的 YOUR_ORG 替换为你的 Organization 名称
-git remote add origin git@github.com:YOUR_ORG/StarryOS.git
+git remote add origin git@github.com:YOUR_ORG/GalOS.git
 
 # 验证远程仓库
 git remote -v
 # 应该输出：
-# origin    git@github.com:YOUR_ORG/StarryOS.git (fetch)
-# origin    git@github.com:YOUR_ORG/StarryOS.git (push)
-# upstream  git@github.com:Starry-OS/StarryOS.git (fetch)
-# upstream  git@github.com:Starry-OS/StarryOS.git (push)
+# origin    git@github.com:YOUR_ORG/GalOS.git (fetch)
+# origin    git@github.com:YOUR_ORG/GalOS.git (push)
+# upstream  git@github.com:Starry-OS/GalOS.git (fetch)
+# upstream  git@github.com:Starry-OS/GalOS.git (push)
 ```
 
 **步骤 3：添加新文件到 Git**
@@ -192,7 +192,7 @@ git push --tags
 cat .gitmodules
 
 # 团队成员克隆后需要执行：
-# git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
+# git clone --recursive git@github.com:YOUR_ORG/GalOS.git
 ```
 
 ---
@@ -207,7 +207,7 @@ cat .gitmodules
 
 ```bash
 # 进入项目目录
-cd /home/c20h30o2/files/StarryOS
+cd /home/c20h30o2/files/GalOS
 
 # 备份当前 .git 目录（以防需要恢复）
 mv .git .git.backup
@@ -216,10 +216,10 @@ mv .git .git.backup
 git init
 
 # 添加团队仓库为远程
-git remote add origin git@github.com:YOUR_ORG/StarryOS.git
+git remote add origin git@github.com:YOUR_ORG/GalOS.git
 
 # 可选：保留上游引用
-git remote add upstream git@github.com:Starry-OS/StarryOS.git
+git remote add upstream git@github.com:Starry-OS/GalOS.git
 ```
 
 **步骤 3：添加所有文件**
@@ -243,7 +243,7 @@ git status
 ```bash
 git commit -m "feat: initial commit with Docker development environment
 
-This is the initial version of StarryOS project for team development.
+This is the initial version of GalOS project for team development.
 
 Features:
 - Based on ArceOS kernel framework
@@ -309,11 +309,11 @@ git status --ignored
 **团队成员克隆时**：
 ```bash
 # 方法 1：克隆时包含子模块
-git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
+git clone --recursive git@github.com:YOUR_ORG/GalOS.git
 
 # 方法 2：克隆后初始化子模块
-git clone git@github.com:YOUR_ORG/StarryOS.git
-cd StarryOS
+git clone git@github.com:YOUR_ORG/GalOS.git
+cd GalOS
 git submodule update --init --recursive
 ```
 
@@ -397,7 +397,7 @@ rm -f *.img *.xz
 
 # 2. 验证构建（可选，在 Docker 中）
 docker-compose build
-docker-compose run --rm starryos-dev bash -c "make build"
+docker-compose run --rm galos-dev bash -c "make build"
 
 # 3. 检查 git 状态
 git status
@@ -468,19 +468,19 @@ jobs:
     - name: Build Docker image
       run: docker-compose build
 
-    - name: Build StarryOS
+    - name: Build GalOS
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "make ARCH=${{ matrix.arch }} build"
 
     - name: Prepare rootfs
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "make ARCH=${{ matrix.arch }} img"
 
     - name: Run tests
       run: |
-        docker-compose run --rm starryos-dev \
+        docker-compose run --rm galos-dev \
           bash -c "python3 scripts/ci-test.py ${{ matrix.arch }}"
 ```
 
@@ -490,14 +490,14 @@ jobs:
 
 ```bash
 # 1. 克隆团队仓库
-git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
-cd StarryOS
+git clone --recursive git@github.com:YOUR_ORG/GalOS.git
+cd GalOS
 
 # 2. 创建功能分支
 git checkout -b feature/my-feature
 
 # 3. 开发（使用 Docker）
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 
 # 4. 提交更改
 git add <files>
@@ -618,14 +618,14 @@ git push --force
 # https://rtyley.github.io/bfg-repo-cleaner/
 ```
 
-### Q4: 如何与上游 Starry-OS/StarryOS 同步更新？
+### Q4: 如何与上游 Starry-OS/GalOS 同步更新？
 
 **仅适用于方案 A（保留历史）**：
 
 ```bash
 # 1. 确保有 upstream 远程
 git remote -v
-# 应该看到 upstream	git@github.com:Starry-OS/StarryOS.git
+# 应该看到 upstream	git@github.com:Starry-OS/GalOS.git
 
 # 2. 拉取上游更新
 git fetch upstream
@@ -674,10 +674,10 @@ git push origin main
 
 **团队成员开始开发**：
 ```bash
-git clone --recursive git@github.com:YOUR_ORG/StarryOS.git
-cd StarryOS
+git clone --recursive git@github.com:YOUR_ORG/GalOS.git
+cd GalOS
 docker-compose build
-docker-compose run --rm starryos-dev
+docker-compose run --rm galos-dev
 ```
 
 ---
