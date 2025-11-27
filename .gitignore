@@ -6,6 +6,7 @@
 **/target/
 /.axconfig.*
 *.img
+*.xz
 /kernel-rv
 /kernel-la
 /.cargo
@@ -14,3 +15,22 @@
 *.swp
 *.swo
 
+# Docker
+*.tar.gz
+
+# Logs
+*.log
+*.pcap
+qemu.log
+netdump.pcap
+
+# Temporary files
+*.tmp
+*~
+
+# IDE
+.vscode/
+*.iml
+
+# OS
+Thumbs.db

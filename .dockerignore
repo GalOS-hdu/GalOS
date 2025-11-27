@@ -1,0 +1,46 @@
+# Git files
+.git
+.gitignore
+.gitmodules
+
+# Build artifacts
+target/
+*.elf
+*.bin
+*.img
+*.uimg
+*.xz
+disk.img
+rootfs-*.img
+qemu.log
+netdump.pcap
+
+# Configuration
+.axconfig.toml
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Rust files
+**/*.rs.bk
+Cargo.lock
+
+# Documentation (optional, comment out if you want to include docs)
+# docs/
+
+# CI/CD
+.github/
+
+# Docker files (no need to include in build context)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Temporary files
+*.log
+*.tmp

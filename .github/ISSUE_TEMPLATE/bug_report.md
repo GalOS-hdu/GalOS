@@ -1,42 +1,50 @@
 ---
 name: Bug Report
-about: Report a bug
-title: "[bug] "
+about: Create a report to help us improve
+title: '[BUG] '
 labels: bug
-assignees: ""
+assignees: ''
 ---
 
-## Description
+## 🐛 Bug Description
 
-A clear and concise description of the bug.
+<!-- A clear and concise description of what the bug is -->
 
-## Steps to Reproduce
+## 📍 Environment
 
-Steps to reproduce the behavior:
+**Operating System:**
+- [ ] Linux (distribution: _____________)
+- [ ] macOS (version: _____________)
+- [ ] Windows (version: _____________)
 
-1. Execute '...'
-2. Call '...'
-3. See error
+**Development Environment:**
+- [ ] Docker (version: _____________)
+- [ ] Native (Rust version: _____________)
 
-## Expected Behavior
+**Architecture:**
+- [ ] RISC-V 64
+- [ ] LoongArch 64
+- [ ] x86_64
+- [ ] AArch64
 
-A clear and concise description of what you expected to happen.
+## 🔄 Steps to Reproduce
 
-## Actual Behavior
+1.
+2.
+3.
 
-A clear and concise description of what actually happened.
+## 🎯 Expected Behavior
 
-## Environment
+## 💥 Actual Behavior
 
-- Architecture: [e.g., riscv64, loongarch64, x86_64, aarch64]
-- QEMU version (if applicable): [e.g., 8.0.0]
-
-## Logs/Error Messages
+## 📝 Error Messages / Logs
 
 ```
-Paste relevant logs or error messages here
+Paste error messages or logs here
 ```
 
-## Additional Context
+## ✅ Checklist
 
-Add any other context about the problem here.
+- [ ] I have searched existing issues
+- [ ] I have tested with the latest version
+- [ ] I can reproduce this bug consistently

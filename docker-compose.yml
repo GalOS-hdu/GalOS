@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  starryos-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        QEMU_VERSION: "10.2.0"
+        RUST_VERSION: "nightly-2025-05-20"
+        MUSL_TOOLCHAIN_VERSION: "20241227"
+        USERNAME: starry
+        USER_UID: 1000
+        USER_GID: 1000
+    image: starryos-dev:latest
+    container_name: starryos-dev
+    hostname: starryos-dev
+
+    # Volume mounts
+    volumes:
+      # Mount project directory
+      - .:/workspace/StarryOS
+      # Persistent cargo cache
+      - cargo-cache:/usr/local/cargo/registry
+      - cargo-git-cache:/usr/local/cargo/git
+      # Persistent target directory (optional, for faster rebuilds)
+      - target-cache:/workspace/StarryOS/target
+
+    # Working directory
+    working_dir: /workspace/StarryOS
+
+    # Keep container running
+    stdin_open: true
+    tty: true
+
+    # Environment variables
+    environment:
+      - ARCH=riscv64
+      - LOG=warn
+      - BACKTRACE=y
+      - MEMTRACK=n
+      # Rust environment
+      - RUSTUP_DIST_SERVER=
+      - CARGO_HOME=/usr/local/cargo
+      - RUSTUP_HOME=/usr/local/rustup
+
+    # Network mode (for QEMU networking)
+    network_mode: bridge
+
+    # Privileged mode (optional, needed for KVM acceleration)
+    # Uncomment if you want to use KVM acceleration
+    # privileged: true
+    # devices:
+    #   - /dev/kvm:/dev/kvm
+
+    # Resource limits (optional)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '8'
+    #       memory: 16G
+    #     reservations:
+    #       cpus: '4'
+    #       memory: 8G
+
+  # CI test environment (lightweight, no volumes)
+  starryos-ci:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        QEMU_VERSION: "10.2.0"
+        RUST_VERSION: "nightly-2025-05-20"
+    image: starryos-ci:latest
+    container_name: starryos-ci
+    working_dir: /workspace/StarryOS
+    volumes:
+      - .:/workspace/StarryOS
+    command: /bin/bash -c "make build && make img && python3 scripts/ci-test.py riscv64"
+    profiles:
+      - ci
+
+volumes:
+  cargo-cache:
+    driver: local
+  cargo-git-cache:
+    driver: local
+  target-cache:
+    driver: local

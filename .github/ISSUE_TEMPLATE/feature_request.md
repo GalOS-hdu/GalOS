@@ -1,31 +1,45 @@
 ---
 name: Feature Request
-about: Suggest a new feature
-title: "[feature] "
+about: Suggest an idea for this project
+title: '[FEATURE] '
 labels: enhancement
-assignees: ""
+assignees: ''
 ---
 
-## Feature Description
+## 🚀 Feature Description
 
-A clear and concise description of the feature you want.
+<!-- A clear description of what you want to happen -->
 
-## Motivation
+## 💡 Motivation
 
-Please explain why this feature would be useful for the project. For example:
+<!-- Why is this feature needed? -->
 
-- What problem does it solve?
-- Who would benefit from it?
-- How does it relate to existing features?
+## 📋 Proposed Solution
 
-## Proposed Solution
+<!-- Describe how you envision this feature working -->
 
-If you have ideas on how to implement this feature, please describe them here.
+## 🔄 Alternatives Considered
 
-## Alternatives
+## 📝 Implementation Details
 
-Describe any alternative solutions or features you've considered.
+### Affected Components
 
-## Additional Context
+- [ ] Core functionality
+- [ ] API
+- [ ] Docker configuration
+- [ ] Build system
+- [ ] Documentation
 
-Add any other context, screenshots, or examples about the feature request here.
+### Architecture Support
+
+- [ ] RISC-V 64
+- [ ] LoongArch 64
+- [ ] x86_64
+- [ ] AArch64
+- [ ] All architectures
+
+## ✅ Checklist
+
+- [ ] I have searched existing issues
+- [ ] I have clearly described the feature
+- [ ] I have considered the impact
