@@ -5,5 +5,12 @@
 5.项目命名更改 从 starryos 到 galos， 对于所有出现的starry、starryos等，考虑其必要性，非必要则替换成 galos ，这要求弄清楚项目依赖，即哪些地方需要用到starry-os仓库下的内容，这部分的starry是不方便直接替换成galos的
 6.完善，使任何从github上获得项目代码的人可以直接使用这个项目，不依赖任何未写入项目配置文件的项目（是否依靠workflows已经能够做到这一点）
 7.每日项目进展需要记录到developlogs中，较大改动需要编写说明文档
-fix loongarch CI, build and test 可以通过， 但是无法通过docker CI 
+fix loongarch CI, build and test 可以通过， 但是无法通过docker CI ,可以在本地使用与docker ci同样的流程，直接测试，避免反复push到仓库待workflows执行完
 feat 在makefile中添加docker相关命令，以快速开始相关测试
+
+哪些地方用到了rootfs img => makefile中可以看到，产生这个img之后会拷贝到arceos目录下，并命名为disk.img
+elf bin文件是如何产生的
+docker compose多用于管理多个容器，为什么在这个项目要用docker compose 比如使用docker compose run 而不是 docker run 
+docker compose run --rm galos-dev           bash -c "python3 scripts/ci-test.py x86_64" 本地执行这条命令，为什么只有riscv64可以顺利执行,而在push之后在github上的workflows却全都可以顺利执行 =>严格按照docker-ci.yml中的指令执行，则可以在本地也可以得到workflows相同的结果
+如何在docker中测试os产生了修改的地方,比如说修改了文件系统，如何编写测试程序并在容器中进行测试
+arceos作为引用的其他仓库的文件，在本项目仓库中只会是一个指向其他仓库的链接，如果我修改了这个目录下的文件，使其与原仓库的不同，会怎么样
