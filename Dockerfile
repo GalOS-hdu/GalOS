@@ -92,6 +92,7 @@ RUN apt-get update && apt-get install -y \
     libslirp0 \
     # Additional utilities
     sudo \
+    gosu \
     vim \
     tmux \
     htop \
@@ -122,6 +123,10 @@ RUN cargo install cargo-axplat --version 0.2.2 && \
     cargo install axconfig-gen --version 0.2.0 && \
     cargo install cargo-binutils --version 0.4.0
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Create a non-root user for development
 ARG USERNAME=starry
 ARG USER_UID=1001
@@ -146,11 +151,13 @@ RUN echo "===== Environment Info =====" && \
     echo "Clang: $(clang --version | head -1)" && \
     echo "============================"
 
-# Switch to non-root user
-USER $USERNAME
+# Set working directory
 WORKDIR /workspace
 
 # Set environment variables for the user
 ENV PATH=/opt/qemu/bin:/opt/musl-toolchains/riscv64-linux-musl-cross/bin:$CARGO_HOME/bin:$PATH
+ENV USERNAME=$USERNAME
 
+# Set entrypoint to handle permissions and user switching
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["/bin/bash"]
