@@ -34,3 +34,6 @@ netdump.pcap
 
 # OS
 Thumbs.db
+
+# Archive directory (development artifacts)
+archive/

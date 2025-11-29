@@ -4,7 +4,7 @@
 # Stage 1: Build QEMU from source (needed for LoongArch64)
 FROM ubuntu:24.04 AS qemu-builder
 
-ARG QEMU_VERSION=10.2.0
+ARG QEMU_VERSION=10.1.2
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libglib2.0-dev \
     libpixman-1-dev \
+    libslirp-dev \
+    libfdt-dev \
+    git \
     flex \
     bison \
     wget \
@@ -82,9 +85,11 @@ RUN apt-get update && apt-get install -y \
     # Python
     python3 \
     python3-pip \
-    # QEMU dependencies
+    # QEMU runtime dependencies
     libglib2.0-0 \
     libpixman-1-0 \
+    libfdt1 \
+    libslirp0 \
     # Additional utilities
     sudo \
     vim \
@@ -119,7 +124,7 @@ RUN cargo install cargo-axplat --version 0.2.2 && \
 
 # Create a non-root user for development
 ARG USERNAME=starry
-ARG USER_UID=1000
+ARG USER_UID=1001
 ARG USER_GID=$USER_UID
 
 RUN groupadd --gid $USER_GID $USERNAME && \

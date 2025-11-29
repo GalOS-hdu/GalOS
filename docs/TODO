@@ -1,0 +1,4 @@
+1.整理项目目录，将学习文档与项目文档分别归类
+2.整理项目代码文件，将rename-to-galos.sh等（为使项目步入正轨而产生的并非项目运行所必须的代码，这些东西也是参赛项目提交时不需要存在的）
+3.了解本地编写代码，docker测试的流程， 知道如何在docker中测试os产生了修改的地方
+4.了解CI/CD github中的ci、github workflows  了解标准的git push流程、编写合规的commit等、如何pr等
