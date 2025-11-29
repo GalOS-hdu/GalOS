@@ -1,0 +1,31 @@
+ 1. 当我将修改后的项目push到git仓库，workflows会做什么
+  2. 针对各种情况，如何按照格式编写commit -m
+  3. .github目录下的md文件为项目提交等步骤提供了建议与格式要求，详细分析
+  4. 最新一次push显示未通过Docker CI，错误在build docker image
+  报错：...（docker-compose command not found）
+  5. 使用方案一
+  6. 最新一次push,Build Docker image再次失败，报错：...（GID conflict）
+  7. 使用方案一
+  8. 最新的push仍然在build galos for xxx时报错，内容：...（proxy error）
+  9. 使用方案2
+  10. 先只做分析，并提出解决方法，最近的push仍然在 Build GalOS for xxx
+  时报错...（permission denied）
+  11. 使用方案2,并且修复权限问题
+  12. 通过了riscv64的test and build 但是其余的架构没有通过，只分析原因
+  13. 修改dockerfile并重新编译镜像
+  14. 简要回答，这也就意味着本地docker容器也需要重新编译，以适配这些架构，对吗
+  15. 检查编译情况（出现3次）
+  16. 这次编译是否使用了代理
+  17. 使用代理
+  18. dockerfile中的qemu版本是否跟随arceos中的dockerfile给出的qemu-9.2.4.tar.xz更合适
+  19. 修改
+  20. 我要对现在的代码进行push,给出commit -m
+  21. 顶层makefile中获得的IMG有什么用
+  22. 最新一次push,loongarch的run ci test报错，其余架构均通过docker ci,报错内容：...
+  23. 你修改了arceos下的内容？按理来说arceos应该不会出这样的错吧，只说明理由
+  24. 1.现在是否支持loongarch 2.在本地启动docker测试
+  25. 所有的架构都能通过build and
+  test,但是却只有loongarch无法通过docker-ci,而docker-ci与一般的build and
+  test相比，只不过是放在docker容器中用基本相同的环境再跑一遍，看来是loongarch与docker
+  镜像之间存在问题是吗
+  26. 我要将部分对话记录下来，先只给出我的所有问题列表
