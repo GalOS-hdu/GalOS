@@ -4,7 +4,7 @@
 # Stage 1: Build QEMU from source (needed for LoongArch64)
 FROM ubuntu:24.04 AS qemu-builder
 
-ARG QEMU_VERSION=10.1.2
+ARG QEMU_VERSION=9.2.4
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -50,10 +50,24 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp/musl
-# Download RISC-V 64 Musl toolchain
-RUN wget https://github.com/arceos-org/setup-musl/releases/download/prebuilt/riscv64-linux-musl-cross.tgz && \
-    mkdir -p /opt/musl-toolchains && \
-    tar -xzf riscv64-linux-musl-cross.tgz -C /opt/musl-toolchains/
+# Download Musl toolchains for all architectures
+RUN mkdir -p /opt/musl-toolchains && \
+    # RISC-V 64
+    wget https://github.com/arceos-org/setup-musl/releases/download/prebuilt/riscv64-linux-musl-cross.tgz && \
+    tar -xzf riscv64-linux-musl-cross.tgz -C /opt/musl-toolchains/ && \
+    rm riscv64-linux-musl-cross.tgz && \
+    # LoongArch 64
+    wget https://github.com/arceos-org/setup-musl/releases/download/prebuilt/loongarch64-linux-musl-cross.tgz && \
+    tar -xzf loongarch64-linux-musl-cross.tgz -C /opt/musl-toolchains/ && \
+    rm loongarch64-linux-musl-cross.tgz && \
+    # AArch64
+    wget https://github.com/arceos-org/setup-musl/releases/download/prebuilt/aarch64-linux-musl-cross.tgz && \
+    tar -xzf aarch64-linux-musl-cross.tgz -C /opt/musl-toolchains/ && \
+    rm aarch64-linux-musl-cross.tgz && \
+    # x86_64
+    wget https://github.com/arceos-org/setup-musl/releases/download/prebuilt/x86_64-linux-musl-cross.tgz && \
+    tar -xzf x86_64-linux-musl-cross.tgz -C /opt/musl-toolchains/ && \
+    rm x86_64-linux-musl-cross.tgz
 
 # Stage 3: Final development environment
 FROM ubuntu:24.04
@@ -65,7 +79,12 @@ LABEL version="1.0"
 ENV DEBIAN_FRONTEND=noninteractive
 ENV RUSTUP_HOME=/usr/local/rustup
 ENV CARGO_HOME=/usr/local/cargo
-ENV PATH=/opt/qemu/bin:/opt/musl-toolchains/riscv64-linux-musl-cross/bin:$CARGO_HOME/bin:$PATH
+ENV PATH=/opt/qemu/bin:\
+/opt/musl-toolchains/riscv64-linux-musl-cross/bin:\
+/opt/musl-toolchains/loongarch64-linux-musl-cross/bin:\
+/opt/musl-toolchains/aarch64-linux-musl-cross/bin:\
+/opt/musl-toolchains/x86_64-linux-musl-cross/bin:\
+$CARGO_HOME/bin:$PATH
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -144,9 +163,14 @@ RUN mkdir -p /workspace && \
 RUN echo "===== Environment Info =====" && \
     echo "Rust: $(rustc --version)" && \
     echo "Cargo: $(cargo --version)" && \
-    echo "QEMU: $(qemu-system-riscv64 --version | head -1)" && \
+    echo "QEMU RISC-V: $(qemu-system-riscv64 --version | head -1)" && \
     echo "QEMU LoongArch: $(qemu-system-loongarch64 --version | head -1)" && \
-    echo "Musl GCC: $(riscv64-linux-musl-gcc --version | head -1)" && \
+    echo "QEMU x86_64: $(qemu-system-x86_64 --version | head -1)" && \
+    echo "QEMU AArch64: $(qemu-system-aarch64 --version | head -1)" && \
+    echo "RISC-V GCC: $(riscv64-linux-musl-gcc --version | head -1)" && \
+    echo "LoongArch GCC: $(loongarch64-linux-musl-gcc --version | head -1)" && \
+    echo "AArch64 GCC: $(aarch64-linux-musl-gcc --version | head -1)" && \
+    echo "x86_64 GCC: $(x86_64-linux-musl-gcc --version | head -1)" && \
     echo "CMake: $(cmake --version | head -1)" && \
     echo "Clang: $(clang --version | head -1)" && \
     echo "============================"
