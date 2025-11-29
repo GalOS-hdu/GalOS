@@ -43,13 +43,14 @@ services:
       - RUSTUP_DIST_SERVER=
       - CARGO_HOME=/usr/local/cargo
       - RUSTUP_HOME=/usr/local/rustup
-      # Proxy configuration (requires host network mode)
-      - HTTP_PROXY=http://127.0.0.1:7897
-      - HTTPS_PROXY=http://127.0.0.1:7897
-      - http_proxy=http://127.0.0.1:7897
-      - https_proxy=http://127.0.0.1:7897
-      - NO_PROXY=localhost,127.0.0.1,::1
-      - no_proxy=localhost,127.0.0.1,::1
+      # Proxy configuration (can be overridden via .env file or environment variables)
+      # Default: empty (no proxy). Set in .env file for local development if needed.
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - http_proxy=${http_proxy:-}
+      - https_proxy=${https_proxy:-}
+      - NO_PROXY=${NO_PROXY:-localhost,127.0.0.1,::1}
+      - no_proxy=${no_proxy:-localhost,127.0.0.1,::1}
 
     # Network mode (use 'host' to access host proxy on 127.0.0.1)
     network_mode: host

@@ -131,8 +131,9 @@ RUN groupadd --gid $USER_GID $USERNAME 2>/dev/null || groupmod -n $USERNAME $(ge
     useradd --uid $USER_UID --gid $USER_GID -m $USERNAME 2>/dev/null || usermod -l $USERNAME -d /home/$USERNAME -m $(getent passwd $USER_UID | cut -d: -f1) && \
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Set up workspace
-RUN mkdir -p /workspace && chown -R $USERNAME:$USERNAME /workspace
+# Set up workspace and cargo permissions
+RUN mkdir -p /workspace && \
+    chown -R $USERNAME:$USERNAME /workspace /usr/local/cargo /usr/local/rustup
 
 # Verify installations
 RUN echo "===== Environment Info =====" && \
