@@ -36,7 +36,9 @@ RUN wget https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz && \
         --enable-slirp \
         --disable-docs && \
     make -j$(nproc) && \
-    make install
+    make install && \
+    cd .. && \
+    rm -rf qemu-${QEMU_VERSION} qemu-${QEMU_VERSION}.tar.xz
 
 # Stage 2: Download and prepare Musl toolchain
 FROM ubuntu:24.04 AS musl-downloader
@@ -128,7 +130,8 @@ ARG RUST_VERSION=nightly-2025-05-20
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
     --default-toolchain ${RUST_VERSION} \
     --profile minimal \
-    --component rust-src,llvm-tools,rustfmt,clippy
+    --component rust-src,llvm-tools,rustfmt,clippy && \
+    rm -rf /tmp/*
 
 # Add Rust target platforms
 RUN rustup target add \
@@ -140,7 +143,8 @@ RUN rustup target add \
 # Install required Cargo tools
 RUN cargo install cargo-axplat --version 0.2.2 && \
     cargo install axconfig-gen --version 0.2.0 && \
-    cargo install cargo-binutils --version 0.4.0
+    cargo install cargo-binutils --version 0.4.0 && \
+    rm -rf $CARGO_HOME/registry $CARGO_HOME/git
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
