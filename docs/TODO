@@ -3,4 +3,4 @@
 3.了解本地编写代码，docker测试的流程， 知道如何在docker中测试os产生了修改的地方
 4.了解CI/CD github中的ci、github workflows  了解标准的git push流程、编写合规的commit等、如何pr等  clippy静态代码分析
 5.项目命名更改 从 starryos 到 galos， 对于所有出现的starry、starryos等，考虑其必要性，非必要则替换成 galos ，这要求弄清楚项目依赖，即哪些地方需要用到starry-os仓库下的内容，这部分的starry是不方便直接替换成galos的
-6.完善，使任何从github上获得项目代码的人可以直接使用这个项目，不依赖任何未写入项目配置文件的项目
+6.完善，使任何从github上获得项目代码的人可以直接使用这个项目，不依赖任何未写入项目配置文件的项目（是否依靠workflows已经能够做到这一点）
