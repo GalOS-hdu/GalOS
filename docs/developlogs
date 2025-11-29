@@ -1,6 +1,8 @@
  1. 当我将修改后的项目push到git仓库，workflows会做什么
+  21. 顶层makefile中获得的IMG有什么用
   2. 针对各种情况，如何按照格式编写commit -m
   3. .github目录下的md文件为项目提交等步骤提供了建议与格式要求，详细分析
+
   4. 最新一次push显示未通过Docker CI，错误在build docker image
   报错：...（docker-compose command not found）
   5. 使用方案一
@@ -20,7 +22,6 @@
   18. dockerfile中的qemu版本是否跟随arceos中的dockerfile给出的qemu-9.2.4.tar.xz更合适
   19. 修改
   20. 我要对现在的代码进行push,给出commit -m
-  21. 顶层makefile中获得的IMG有什么用
   22. 最新一次push,loongarch的run ci test报错，其余架构均通过docker ci,报错内容：...
   23. 你修改了arceos下的内容？按理来说arceos应该不会出这样的错吧，只说明理由
   24. 1.现在是否支持loongarch 2.在本地启动docker测试
