@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        QEMU_VERSION: "9.2.4"
+        QEMU_VERSION: "10.1.0"
         RUST_VERSION: "nightly-2025-05-20"
         MUSL_TOOLCHAIN_VERSION: "20241227"
         USERNAME: starry
@@ -75,7 +75,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        QEMU_VERSION: "9.2.4"
+        QEMU_VERSION: "10.1.0"
         RUST_VERSION: "nightly-2025-05-20"
     image: galos-ci:latest
     container_name: galos-ci
