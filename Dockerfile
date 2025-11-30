@@ -4,7 +4,8 @@
 # Stage 1: Build QEMU from source (needed for LoongArch64)
 FROM ubuntu:24.04 AS qemu-builder
 
-ARG QEMU_VERSION=9.2.4
+# ARG QEMU_VERSION=9.2.4
+ARG QEMU_VERSION=10.1.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
