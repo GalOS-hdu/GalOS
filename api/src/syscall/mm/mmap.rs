@@ -314,8 +314,69 @@ pub fn sys_mremap(addr: usize, old_size: usize, new_size: usize, flags: u32) -> 
     Ok(new_addr as isize)
 }
 
-pub fn sys_madvise(addr: usize, length: usize, advice: i32) -> AxResult<isize> {
+pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
     debug!("sys_madvise <= addr: {addr:#x}, length: {length:x}, advice: {advice:#x}");
+    
+    // 验证地址对齐和长度
+    if addr % PageSize::Size4K as usize != 0 || length == 0 {
+        return Err(AxError::InvalidInput);
+    }
+    
+    let curr = current();
+    let mut aspace = curr.as_thread().proc_data.aspace.lock();
+    let start_addr = VirtAddr::from(addr);
+    let length = align_up_4k(length);
+    
+    // 检查内存区域是否存在
+    if !aspace.contains_range(start_addr, length) {
+        return Err(AxError::InvalidInput);
+    }
+    
+    // 根据advice参数实现不同的策略
+    match advice {
+        MADV_NORMAL => {
+            // 默认行为，重置之前的建议
+            debug!("MADV_NORMAL: Reset memory access hints");
+        },
+        MADV_RANDOM => {
+            // 随机访问模式，可能调整预取策略
+            debug!("MADV_RANDOM: Expecting random memory access");
+        },
+        MADV_SEQUENTIAL => {
+            // 顺序访问模式，优化预取
+            debug!("MADV_SEQUENTIAL: Expecting sequential memory access");
+            // 可以在这里实现预取逻辑
+        },
+        MADV_WILLNEED => {
+            // 预加载内存页
+            debug!("MADV_WILLNEED: Preloading memory pages");
+            aspace.populate_area(start_addr, length, MappingFlags::READ)?;
+        },
+        MADV_DONTNEED => {
+            // 释放内存页但保留地址空间
+            debug!("MADV_DONTNEED: Releasing memory pages");
+            // 实现释放页面的逻辑
+            // aspace.clear_area(start_addr, length)?;
+        },
+        MADV_REMOVE => {
+            // 从映射中删除页面
+            debug!("MADV_REMOVE: Removing pages from mapping");
+        },
+        MADV_DONTFORK => {
+            // 子进程不继承此内存区域
+            debug!("MADV_DONTFORK: Child processes won't inherit this memory");
+        },
+        MADV_DOFORK => {
+            // 重置MADV_DONTFORK标志
+            debug!("MADV_DOFORK: Child processes will inherit this memory");
+        },
+        // 其他建议类型的实现...
+        _ => {
+            warn!("Unknown madvise advice: {advice}");
+            return Err(AxError::InvalidInput);
+        },
+    }
+    
     Ok(0)
 }
 

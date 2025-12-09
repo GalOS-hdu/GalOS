@@ -9,7 +9,6 @@ extern crate alloc;
 extern crate axruntime;
 
 use alloc::{borrow::ToOwned, vec::Vec};
-
 use axfs_ng::FS_CONTEXT;
 
 mod entry;
@@ -17,6 +16,7 @@ mod entry;
 pub const CMDLINE: &[&str] = &["/bin/sh", "-c", include_str!("init.sh")];
 
 #[unsafe(no_mangle)]
+
 fn main() {
     starry_api::init();
 
@@ -37,6 +37,7 @@ fn main() {
         .filesystem()
         .flush()
         .expect("Failed to flush rootfs");
+    
 }
 
 #[cfg(feature = "vf2")]
