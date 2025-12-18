@@ -5,6 +5,7 @@ use axfs_ng::FileBackend;
 use axhal::paging::{MappingFlags, PageSize};
 use axmm::backend::{Backend, SharedPages};
 use axtask::current;
+use axmm::backend::BackendOps;
 use linux_raw_sys::general::*;
 use memory_addr::{MemoryAddr, VirtAddr, VirtAddrRange, align_up_4k};
 use starry_core::{
@@ -381,16 +382,34 @@ pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
             aspace.clear_area(start_addr, length)?;
         },
         MADV_REMOVE => {
-            // 从映射中删除页面
-            debug!("MADV_REMOVE: Removing pages from mapping");
-        },
+                    // 从映射中删除页面
+                    debug!("MADV_REMOVE: Removing pages from mapping");
+                    // 目前只支持匿名映射的页面删除
+                    // 对于文件映射，需要更复杂的处理
+                    if let Some(area) = aspace.find_area(start_addr) {
+                        // 检查是否为匿名映射（简化实现）
+                        match area.backend().page_size() {
+                            PageSize::Size4K => {
+                                // 对于匿名映射，我们可以直接解除映射
+                                aspace.unmap(start_addr, length)?;
+                            },
+                            _ => {
+                                // 对于其他类型的映射，返回错误
+                                warn!("MADV_REMOVE only supported for anonymous mappings");
+                                return Err(AxError::OperationNotSupported);
+                            }
+                        }
+                    }
+                },
         MADV_DONTFORK => {
             // 子进程不继承此内存区域
             debug!("MADV_DONTFORK: Child processes won't inherit this memory");
+            aspace.set_dontfork(start_addr, length)?;
         },
         MADV_DOFORK => {
             // 重置MADV_DONTFORK标志
             debug!("MADV_DOFORK: Child processes will inherit this memory");
+            aspace.set_dofork(start_addr, length)?;
         },
         // 其他建议类型的实现...
         _ => {
