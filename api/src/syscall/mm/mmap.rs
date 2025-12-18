@@ -339,13 +339,35 @@ pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
             debug!("MADV_NORMAL: Reset memory access hints");
         },
         MADV_RANDOM => {
-            // 随机访问模式，可能调整预取策略
             debug!("MADV_RANDOM: Expecting random memory access");
+              
+            // 仅释放超过一定阈值的未使用页面，保留部分工作集
+            const KEEP_THRESHOLD: usize = 5 * PageSize::Size4K as usize; // 保留最近使用的5页
+            if length > KEEP_THRESHOLD {
+                // 释放除了最近使用页面之外的其他页面
+                // 这里需要实现页面使用时间的跟踪
+                aspace.clear_area(start_addr + KEEP_THRESHOLD, length - KEEP_THRESHOLD)?;
+            }
         },
         MADV_SEQUENTIAL => {
             // 顺序访问模式，优化预取
             debug!("MADV_SEQUENTIAL: Expecting sequential memory access");
-            // 可以在这里实现预取逻辑
+            
+            // 基本预取：加载当前区域
+            aspace.populate_area(start_addr, length, MappingFlags::READ)?;
+            
+            // 高级预取：尝试加载后续区域（可选）
+            // 这里可以根据需要调整预取的额外长度
+            const PREFETCH_EXTENSION: usize = 10 * PageSize::Size4K as usize; // 预取额外的10个页面
+            
+            let current_end = start_addr + length;
+            let _prefetch_end = current_end + PREFETCH_EXTENSION;
+            
+            // 检查预取区域是否在地址空间范围内
+            if aspace.contains_range(current_end, PREFETCH_EXTENSION) {
+                // 尝试预取后续区域，但忽略错误（如果内存不足等情况）
+                let _ = aspace.populate_area(current_end, PREFETCH_EXTENSION, MappingFlags::READ);
+            }
         },
         MADV_WILLNEED => {
             // 预加载内存页
@@ -356,7 +378,7 @@ pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
             // 释放内存页但保留地址空间
             debug!("MADV_DONTNEED: Releasing memory pages");
             // 实现释放页面的逻辑
-            // aspace.clear_area(start_addr, length)?;
+            aspace.clear_area(start_addr, length)?;
         },
         MADV_REMOVE => {
             // 从映射中删除页面

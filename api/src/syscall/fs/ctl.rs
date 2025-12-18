@@ -1,3 +1,4 @@
+extern crate alloc;
 use alloc::{ffi::CString, vec, vec::Vec};
 use core::{
     ffi::{c_char, c_int},

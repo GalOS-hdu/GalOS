@@ -5,7 +5,7 @@
 // See LICENSES for license details.
 // 
 // This file has been modified by KylinSoft on 2025.
-
+extern crate alloc;
 use alloc::{
     borrow::Cow,
     collections::vec_deque::VecDeque,

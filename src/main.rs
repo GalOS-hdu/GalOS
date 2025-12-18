@@ -37,7 +37,6 @@ fn main() {
         .filesystem()
         .flush()
         .expect("Failed to flush rootfs");
-    
 }
 
 #[cfg(feature = "vf2")]
