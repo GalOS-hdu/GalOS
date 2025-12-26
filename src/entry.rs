@@ -22,12 +22,22 @@ pub fn run_initproc(args: &[String], envs: &[String]) -> i32 {
         })
         .expect("Failed to create user address space");
 
+    warn!("[entry] Attempting to resolve: {}", &args[0]);
     let loc = FS_CONTEXT
         .lock()
         .resolve(&args[0])
+        .map_err(|e| {
+            error!("[entry] Failed to resolve '{}': {:?}", &args[0], e);
+            e
+        })
         .expect("Failed to resolve executable path");
+    warn!("[entry] Successfully resolved, getting absolute path...");
     let path = loc
         .absolute_path()
+        .map_err(|e| {
+            error!("[entry] Failed to get absolute path: {:?}", e);
+            e
+        })
         .expect("Failed to get executable absolute path");
     let name = loc.name();
 
