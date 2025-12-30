@@ -1,5 +1,7 @@
+const MS_SYNC: u32 = 1;
+const MS_ASYNC: u32 = 2;
+const MS_INVALIDATE: u32 = 4;
 use alloc::sync::Arc;
-
 use axerrno::{AxError, AxResult};
 use axfs_ng::FileBackend;
 use axhal::paging::{MappingFlags, PageSize};
@@ -7,7 +9,7 @@ use axmm::backend::{Backend, SharedPages};
 use axtask::current;
 use axmm::backend::BackendOps;
 use linux_raw_sys::general::*;
-use memory_addr::{MemoryAddr, VirtAddr, VirtAddrRange, align_up_4k};
+use memory_addr::{MemoryAddr, VirtAddr, VirtAddrRange, align_up_4k,is_aligned_4k};
 use starry_core::{
     task::AsThread,
     vfs::{Device, DeviceMmap},
@@ -421,16 +423,84 @@ pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
     Ok(0)
 }
 
+// 修改mmap.rs文件中的sys_msync函数
 pub fn sys_msync(addr: usize, length: usize, flags: u32) -> AxResult<isize> {
     debug!("sys_msync <= addr: {addr:#x}, length: {length:x}, flags: {flags:#x}");
+
+    // 检查addr是否对齐
+    if !is_aligned_4k(addr) {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 检查flags是否有效
+    if flags & !(MS_SYNC | MS_ASYNC | MS_INVALIDATE) != 0 {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 检查MS_SYNC和MS_ASYNC是否同时设置
+    if (flags & MS_SYNC) != 0 && (flags & MS_ASYNC) != 0 {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 获取当前任务的地址空间
+    let current = current();
+    let mut aspace = current.as_thread().proc_data.aspace.lock();
+
+    // 同步内存区域
+    let start = VirtAddr::from(addr);
+    aspace.sync_area(start, length)?;
+
+    // 处理MS_INVALIDATE标志（可选，当前实现中暂不处理）
+    if flags & MS_INVALIDATE != 0 {
+        // TODO: 实现缓存失效功能
+    }
 
     Ok(0)
 }
 
+/// 锁定内存区域，防止被交换出去
 pub fn sys_mlock(addr: usize, length: usize) -> AxResult<isize> {
     sys_mlock2(addr, length, 0)
 }
 
-pub fn sys_mlock2(_addr: usize, _length: usize, _flags: u32) -> AxResult<isize> {
+/// 带有额外标志的内存锁定函数
+pub fn sys_mlock2(addr: usize, length: usize, flags: u32) -> AxResult<isize> {
+    debug!("sys_mlock2 <= addr: {addr:#x}, length: {length:x}, flags: {flags:#x}");
+
+    // 检查flags是否合法
+    if flags != 0 {
+        // 当前只支持flags=0
+        return Err(AxError::InvalidInput);
+    }
+
+    // 确保长度不为0
+    if length == 0 {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 获取当前任务
+    let curr = current();
+    let mut aspace = curr.as_thread().proc_data.aspace.lock();
+
+    // 对齐地址和长度到4K页面
+    let start = addr.align_down_4k();
+    let end = (addr + length).align_up_4k();
+    let aligned_length = end - start;
+
+    // 验证内存区域是否在地址空间范围内
+    let start_addr = VirtAddr::from(start);
+    if !aspace.contains_range(start_addr, aligned_length) {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 验证内存区域是否可访问
+    if !aspace.can_access_range(start_addr, aligned_length, MappingFlags::READ | MappingFlags::WRITE) {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 使用populate_area功能将内存锁定在物理内存中
+    // 这会将所有页面映射到物理内存，并防止它们被交换出去
+    aspace.populate_area(start_addr, aligned_length, MappingFlags::READ | MappingFlags::WRITE)?;
+
     Ok(0)
 }
