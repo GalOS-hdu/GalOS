@@ -18,7 +18,6 @@ pub mod terminal;
 pub mod time;
 pub mod vfs;
 /// Initialize.
-
 pub fn init() {
     info!("Initialize VFS...");
     vfs::mount_all().expect("Failed to mount vfs");
