@@ -1,3 +1,4 @@
+extern crate alloc;
 use alloc::{borrow::Cow, sync::Arc, vec};
 use core::{
     ffi::{c_char, c_int},

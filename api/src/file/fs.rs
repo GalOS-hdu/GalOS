@@ -1,3 +1,4 @@
+extern crate alloc;
 use alloc::{borrow::Cow, string::ToString, sync::Arc};
 use core::{
     any::Any,

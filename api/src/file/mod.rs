@@ -5,7 +5,7 @@ mod net;
 mod pidfd;
 mod pipe;
 pub mod signalfd;
-
+extern crate alloc;
 use alloc::{borrow::Cow, sync::Arc};
 use core::{any::Any, ffi::c_int, time::Duration};
 

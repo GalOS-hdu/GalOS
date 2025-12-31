@@ -1,3 +1,4 @@
+extern crate alloc;
 use alloc::{format, string::ToString, sync::Arc};
 use core::{
     ffi::{c_char, c_int},
