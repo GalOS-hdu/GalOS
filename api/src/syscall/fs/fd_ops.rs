@@ -125,10 +125,19 @@ pub fn sys_openat(
 
     let mode = mode & !current().as_thread().proc_data.umask();
 
+    let log_apk = path.contains("apk") || path.contains("APKINDEX");
     let options = flags_to_options(flags, mode, (sys_geteuid()? as _, sys_getegid()? as _));
-    with_fs(dirfd, |fs| options.open(fs, path))
-        .and_then(|it| add_to_fd(it, flags as _))
-        .map(|fd| fd as isize)
+    let result = with_fs(dirfd, |fs| options.open(fs, path))
+        .and_then(|it| add_to_fd(it, flags as _));
+
+    if log_apk {
+        match &result {
+            Ok(fd) => info!("[OPEN] openat SUCCESS: fd={}", fd),
+            Err(e) => warn!("[OPEN] openat FAILED: error={:?}", e),
+        }
+    }
+
+    result.map(|fd| fd as isize)
 }
 
 /// Open a file by `filename` and insert it into the file descriptor table.

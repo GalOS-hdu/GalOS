@@ -78,8 +78,17 @@ pub fn sys_readv(fd: i32, iov: *const IoVec, iovcnt: usize) -> AxResult<isize> {
 ///
 /// Return the written size if success.
 pub fn sys_write(fd: i32, buf: *mut u8, len: usize) -> AxResult<isize> {
+    if len > 1024 {
+        info!("[WRITE] sys_write <= fd: {fd}, len: {len}");
+    }
     debug!("sys_write <= fd: {fd}, buf: {buf:p}, len: {len}");
-    Ok(get_file_like(fd)?.write(&mut VmBytes::new(buf, len).into())? as _)
+    let result = get_file_like(fd)?.write(&mut VmBytes::new(buf, len).into());
+    match &result {
+        Ok(written) if len > 1024 => info!("[WRITE] write SUCCESS: fd={fd}, written={}", written),
+        Err(e) if len > 1024 => warn!("[WRITE] write FAILED: fd={fd}, len={len}, error={:?}", e),
+        _ => {}
+    }
+    Ok(result? as _)
 }
 
 pub fn sys_writev(fd: i32, iov: *const IoVec, iovcnt: usize) -> AxResult<isize> {

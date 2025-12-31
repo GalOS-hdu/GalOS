@@ -131,6 +131,10 @@ pub fn sys_mmap(
         return Err(AxError::InvalidInput);
     }
 
+    info!(
+        "[MMAP] sys_mmap <= addr: {addr:#x?}, length: {length:#x?}, prot: {permission_flags:?}, flags: \
+         {map_flags:?}, fd: {fd:?}, offset: {offset:?}"
+    );
     debug!(
         "sys_mmap <= addr: {addr:#x?}, length: {length:#x?}, prot: {permission_flags:?}, flags: \
          {map_flags:?}, fd: {fd:?}, offset: {offset:?}"
@@ -241,8 +245,14 @@ pub fn sys_mmap(
     };
 
     let populate = map_flags.contains(MmapFlags::POPULATE);
-    aspace.map(start, length, permission_flags.into(), populate, backend)?;
+    let result = aspace.map(start, length, permission_flags.into(), populate, backend);
 
+    match &result {
+        Ok(_) => info!("[MMAP] mmap SUCCESS: addr={:#x}", start.as_usize()),
+        Err(e) => warn!("[MMAP] mmap FAILED: error={:?}", e),
+    }
+
+    result?;
     Ok(start.as_usize() as _)
 }
 
