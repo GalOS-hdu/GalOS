@@ -10,7 +10,7 @@ extern crate axruntime;
 
 use alloc::{borrow::ToOwned, vec::Vec};
 use axfs_ng::FS_CONTEXT;
-
+use starry_api::syscall::handle_syscall;
 mod entry;
 
 pub const CMDLINE: &[&str] = &["/bin/sh", "-c", include_str!("init.sh")];

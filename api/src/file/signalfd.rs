@@ -130,16 +130,16 @@ impl FileLike for Signalfd {
                 if let Some(sig_info) = self.dequeue_signal() {
                     // Convert SignalInfo to SignalfdSiginfo
                     let sfd_info = SignalfdSiginfo::from_signal_info(&sig_info);
-                    
+
                     // Write the structure to the destination buffer
                     let bytes = sfd_info.as_bytes();
                     dst.write(bytes)?;
-                    
+
                     // Wake up other waiters if there are more signals pending
                     if self.has_pending_signals() {
                         self.poll_rx.wake();
                     }
-                    
+
                     Ok(SIGNALFD_SIGINFO_SIZE)
                 } else {
                     Err(AxError::WouldBlock)

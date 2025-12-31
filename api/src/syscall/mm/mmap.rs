@@ -319,22 +319,22 @@ pub fn sys_mremap(addr: usize, old_size: usize, new_size: usize, flags: u32) -> 
 
 pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
     debug!("sys_madvise <= addr: {addr:#x}, length: {length:x}, advice: {advice:#x}");
-    
+
     // 验证地址对齐和长度
     if addr % PageSize::Size4K as usize != 0 || length == 0 {
         return Err(AxError::InvalidInput);
     }
-    
+
     let curr = current();
     let mut aspace = curr.as_thread().proc_data.aspace.lock();
     let start_addr = VirtAddr::from(addr);
     let length = align_up_4k(length);
-    
+
     // 检查内存区域是否存在
     if !aspace.contains_range(start_addr, length) {
         return Err(AxError::InvalidInput);
     }
-    
+
     // 根据advice参数实现不同的策略
     match advice {
         MADV_NORMAL => {
@@ -343,7 +343,7 @@ pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
         },
         MADV_RANDOM => {
             debug!("MADV_RANDOM: Expecting random memory access");
-              
+
             // 仅释放超过一定阈值的未使用页面，保留部分工作集
             const KEEP_THRESHOLD: usize = 5 * PageSize::Size4K as usize; // 保留最近使用的5页
             if length > KEEP_THRESHOLD {
@@ -355,17 +355,17 @@ pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
         MADV_SEQUENTIAL => {
             // 顺序访问模式，优化预取
             debug!("MADV_SEQUENTIAL: Expecting sequential memory access");
-            
+
             // 基本预取：加载当前区域
             aspace.populate_area(start_addr, length, MappingFlags::READ)?;
-            
+
             // 高级预取：尝试加载后续区域（可选）
             // 这里可以根据需要调整预取的额外长度
             const PREFETCH_EXTENSION: usize = 10 * PageSize::Size4K as usize; // 预取额外的10个页面
-            
+
             let current_end = start_addr + length;
             let _prefetch_end = current_end + PREFETCH_EXTENSION;
-            
+
             // 检查预取区域是否在地址空间范围内
             if aspace.contains_range(current_end, PREFETCH_EXTENSION) {
                 // 尝试预取后续区域，但忽略错误（如果内存不足等情况）
@@ -419,7 +419,7 @@ pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
             return Err(AxError::InvalidInput);
         },
     }
-    
+
     Ok(0)
 }
 
