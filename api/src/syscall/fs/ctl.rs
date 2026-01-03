@@ -305,7 +305,9 @@ pub fn sys_symlinkat(
 
     match &result {
         Ok(_) => info!("[SYMLINK] symlinkat SUCCESS: target={}, linkpath={}", target, linkpath),
-        Err(e) => warn!("[SYMLINK] symlinkat FAILED: target={}, linkpath={}, error={:?}", target, linkpath, e),
+        // prepare for os contest, replace warn to info
+        // Err(e) => warn!("[SYMLINK] symlinkat FAILED: target={}, linkpath={}, error={:?}", target, linkpath, e),
+        Err(e) => info!("[SYMLINK] symlinkat FAILED: target={}, linkpath={}, error={:?}", target, linkpath, e),
     }
 
     result
