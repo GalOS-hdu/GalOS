@@ -101,7 +101,9 @@ pub fn sys_mkdirat(dirfd: i32, path: *const c_char, mode: u32) -> AxResult<isize
 
     match &result {
         Ok(_) => info!("[MKDIR] mkdirat SUCCESS: path={}, mode={:#o}", path_str, mode.bits()),
-        Err(e) => warn!("[MKDIR] mkdirat FAILED: path={}, mode={:#o}, error={:?}", path_str, mode.bits(), e),
+        // prepare for os contest,replace warn to info
+        // Err(e) => warn!("[MKDIR] mkdirat FAILED: path={}, mode={:#o}, error={:?}", path_str, mode.bits(), e),
+        Err(e) => info!("[MKDIR] mkdirat FAILED: path={}, mode={:#o}, error={:?}", path_str, mode.bits(), e),
     }
 
     result
@@ -221,7 +223,9 @@ pub fn sys_linkat(
 
     match &result {
         Ok(_) => info!("[LINK] linkat SUCCESS: old={:?}, new={}/{:?}", old_path_str, new_path_str, new_name),
-        Err(e) => warn!("[LINK] linkat FAILED: old={:?}, new={}/{:?}, error={:?}", old_path_str, new_path_str, new_name, e),
+        // prepare for os contest,replace warn to info
+        // Err(e) => warn!("[LINK] linkat FAILED: old={:?}, new={}/{:?}, error={:?}", old_path_str, new_path_str, new_name, e),
+        Err(e) => info!("[LINK] linkat FAILED: old={:?}, new={}/{:?}, error={:?}", old_path_str, new_path_str, new_name, e),
     }
 
     result?;
@@ -383,7 +387,9 @@ pub fn sys_fchownat(
 
     match &result {
         Ok(_) => info!("[CHOWN] fchownat SUCCESS: path={:?}, uid={}, gid={}", path_str, uid, gid),
-        Err(e) => warn!("[CHOWN] fchownat FAILED: path={:?}, uid={}, gid={}, error={:?}", path_str, uid, gid, e),
+        // prepare for os contest,replace warn to info
+        // Err(e) => warn!("[CHOWN] fchownat FAILED: path={:?}, uid={}, gid={}, error={:?}", path_str, uid, gid, e),
+        Err(e) => info!("[CHOWN] fchownat FAILED: path={:?}, uid={}, gid={}, error={:?}", path_str, uid, gid, e),
     }
 
     result?;
@@ -411,7 +417,9 @@ pub fn sys_fchmodat(dirfd: i32, path: *const c_char, mode: u32, flags: u32) -> A
 
     match &result {
         Ok(_) => info!("[CHMOD] fchmodat SUCCESS: path={:?}, mode={:#o}", path, mode),
-        Err(e) => warn!("[CHMOD] fchmodat FAILED: path={:?}, mode={:#o}, error={:?}", path, mode, e),
+        // prepare for os contest,replace warn to info
+        // Err(e) => warn!("[CHMOD] fchmodat FAILED: path={:?}, mode={:#o}, error={:?}", path, mode, e),
+        Err(e) => info!("[CHMOD] fchmodat FAILED: path={:?}, mode={:#o}, error={:?}", path, mode, e),
     }
 
     result?;
@@ -516,7 +524,9 @@ pub fn sys_utimensat(
 
     match &result {
         Ok(_) => info!("[UTIMENS] utimensat SUCCESS: path={:?}", path_str),
-        Err(e) => warn!("[UTIMENS] utimensat FAILED: path={:?}, error={:?}", path_str, e),
+        // prepare for os contest,replace warn to info
+        // Err(e) => warn!("[UTIMENS] utimensat FAILED: path={:?}, error={:?}", path_str, e),
+        Err(e) => info!("[UTIMENS] utimensat FAILED: path={:?}, error={:?}", path_str, e),
     }
 
     result?;
@@ -559,7 +569,9 @@ pub fn sys_renameat2(
 
     match &result {
         Ok(_) => info!("[RENAME] renameat2 SUCCESS: old={}, new={}", old_path_str, new_path_str),
-        Err(e) => warn!("[RENAME] renameat2 FAILED: old={}, new={}, error={:?}", old_path_str, new_path_str, e),
+        // prepare for os contest,replace warn to info
+        // Err(e) => warn!("[RENAME] renameat2 FAILED: old={}, new={}, error={:?}", old_path_str, new_path_str, e),
+        Err(e) => info!("[RENAME] renameat2 FAILED: old={}, new={}, error={:?}", old_path_str, new_path_str, e),
     }
 
     result?;
