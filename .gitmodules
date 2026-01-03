@@ -1,4 +1,4 @@
 [submodule "arceos"]
 	path = arceos
     url = https://github.com/GalOS-hdu/arceos
-	branch = feat/lwext4-core-integration
+	branch = debug/for-contest-half

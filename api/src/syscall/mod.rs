@@ -18,7 +18,7 @@ use self::{
     fs::*, io_mpx::*, ipc::*, mm::*, net::*, resources::*, signal::*, sync::*, sys::*, task::*,
     time::*,
 };
-
+pub use self::sys::sys_uname;
 pub fn handle_syscall(uctx: &mut UserContext) {
     let Some(sysno) = Sysno::new(uctx.sysno()) else {
         warn!("Invalid syscall number: {}", uctx.sysno());
@@ -497,6 +497,8 @@ pub fn handle_syscall(uctx: &mut UserContext) {
         Sysno::getegid => sys_getegid(),
         Sysno::setuid => sys_setuid(uctx.arg0() as _),
         Sysno::setgid => sys_setgid(uctx.arg0() as _),
+        Sysno::setfsuid => sys_setfsuid(uctx.arg0() as _),
+        Sysno::setfsgid => sys_setfsgid(uctx.arg0() as _),
         Sysno::getgroups => sys_getgroups(uctx.arg0() as _, uctx.arg1() as _),
         Sysno::setgroups => sys_setgroups(uctx.arg0() as _, uctx.arg1() as _),
         Sysno::uname => sys_uname(uctx.arg0() as _),

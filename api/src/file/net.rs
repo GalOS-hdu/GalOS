@@ -1,3 +1,4 @@
+extern crate alloc;
 use alloc::{borrow::Cow, format, sync::Arc};
 use core::{ffi::c_int, ops::Deref, task::Context};
 

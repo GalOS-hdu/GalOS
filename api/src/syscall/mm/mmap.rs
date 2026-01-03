@@ -1,12 +1,15 @@
+const MS_SYNC: u32 = 1;
+const MS_ASYNC: u32 = 2;
+const MS_INVALIDATE: u32 = 4;
 use alloc::sync::Arc;
-
 use axerrno::{AxError, AxResult};
 use axfs_ng::FileBackend;
 use axhal::paging::{MappingFlags, PageSize};
 use axmm::backend::{Backend, SharedPages};
 use axtask::current;
+use axmm::backend::BackendOps;
 use linux_raw_sys::general::*;
-use memory_addr::{MemoryAddr, VirtAddr, VirtAddrRange, align_up_4k};
+use memory_addr::{MemoryAddr, VirtAddr, VirtAddrRange, align_up_4k,is_aligned_4k};
 use starry_core::{
     task::AsThread,
     vfs::{Device, DeviceMmap},
@@ -324,21 +327,190 @@ pub fn sys_mremap(addr: usize, old_size: usize, new_size: usize, flags: u32) -> 
     Ok(new_addr as isize)
 }
 
-pub fn sys_madvise(addr: usize, length: usize, advice: i32) -> AxResult<isize> {
+pub fn sys_madvise(addr: usize, length: usize, advice: u32) -> AxResult<isize> {
     debug!("sys_madvise <= addr: {addr:#x}, length: {length:x}, advice: {advice:#x}");
+
+    // 验证地址对齐和长度
+    if addr % PageSize::Size4K as usize != 0 || length == 0 {
+        return Err(AxError::InvalidInput);
+    }
+
+    let curr = current();
+    let mut aspace = curr.as_thread().proc_data.aspace.lock();
+    let start_addr = VirtAddr::from(addr);
+    let length = align_up_4k(length);
+
+    // 检查内存区域是否存在
+    if !aspace.contains_range(start_addr, length) {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 根据advice参数实现不同的策略
+    match advice {
+        MADV_NORMAL => {
+            // 默认行为，重置之前的建议
+            debug!("MADV_NORMAL: Reset memory access hints");
+        },
+        MADV_RANDOM => {
+            debug!("MADV_RANDOM: Expecting random memory access");
+
+            // 仅释放超过一定阈值的未使用页面，保留部分工作集
+            const KEEP_THRESHOLD: usize = 5 * PageSize::Size4K as usize; // 保留最近使用的5页
+            if length > KEEP_THRESHOLD {
+                // 释放除了最近使用页面之外的其他页面
+                // 这里需要实现页面使用时间的跟踪
+                aspace.clear_area(start_addr + KEEP_THRESHOLD, length - KEEP_THRESHOLD)?;
+            }
+        },
+        MADV_SEQUENTIAL => {
+            // 顺序访问模式，优化预取
+            debug!("MADV_SEQUENTIAL: Expecting sequential memory access");
+
+            // 基本预取：加载当前区域
+            aspace.populate_area(start_addr, length, MappingFlags::READ)?;
+
+            // 高级预取：尝试加载后续区域（可选）
+            // 这里可以根据需要调整预取的额外长度
+            const PREFETCH_EXTENSION: usize = 10 * PageSize::Size4K as usize; // 预取额外的10个页面
+
+            let current_end = start_addr + length;
+            let _prefetch_end = current_end + PREFETCH_EXTENSION;
+
+            // 检查预取区域是否在地址空间范围内
+            if aspace.contains_range(current_end, PREFETCH_EXTENSION) {
+                // 尝试预取后续区域，但忽略错误（如果内存不足等情况）
+                let _ = aspace.populate_area(current_end, PREFETCH_EXTENSION, MappingFlags::READ);
+            }
+        },
+        MADV_WILLNEED => {
+            // 预加载内存页
+            debug!("MADV_WILLNEED: Preloading memory pages");
+            aspace.populate_area(start_addr, length, MappingFlags::READ)?;
+        },
+        MADV_DONTNEED => {
+            // 释放内存页但保留地址空间
+            debug!("MADV_DONTNEED: Releasing memory pages");
+            // 实现释放页面的逻辑
+            aspace.clear_area(start_addr, length)?;
+        },
+        MADV_REMOVE => {
+                    // 从映射中删除页面
+                    debug!("MADV_REMOVE: Removing pages from mapping");
+                    // 目前只支持匿名映射的页面删除
+                    // 对于文件映射，需要更复杂的处理
+                    if let Some(area) = aspace.find_area(start_addr) {
+                        // 检查是否为匿名映射（简化实现）
+                        match area.backend().page_size() {
+                            PageSize::Size4K => {
+                                // 对于匿名映射，我们可以直接解除映射
+                                aspace.unmap(start_addr, length)?;
+                            },
+                            _ => {
+                                // 对于其他类型的映射，返回错误
+                                warn!("MADV_REMOVE only supported for anonymous mappings");
+                                return Err(AxError::OperationNotSupported);
+                            }
+                        }
+                    }
+                },
+        MADV_DONTFORK => {
+            // 子进程不继承此内存区域
+            debug!("MADV_DONTFORK: Child processes won't inherit this memory");
+            aspace.set_dontfork(start_addr, length)?;
+        },
+        MADV_DOFORK => {
+            // 重置MADV_DONTFORK标志
+            debug!("MADV_DOFORK: Child processes will inherit this memory");
+            aspace.set_dofork(start_addr, length)?;
+        },
+        // 其他建议类型的实现...
+        _ => {
+            warn!("Unknown madvise advice: {advice}");
+            return Err(AxError::InvalidInput);
+        },
+    }
+
     Ok(0)
 }
 
+// 修改mmap.rs文件中的sys_msync函数
 pub fn sys_msync(addr: usize, length: usize, flags: u32) -> AxResult<isize> {
     debug!("sys_msync <= addr: {addr:#x}, length: {length:x}, flags: {flags:#x}");
 
+    // 检查addr是否对齐
+    if !is_aligned_4k(addr) {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 检查flags是否有效
+    if flags & !(MS_SYNC | MS_ASYNC | MS_INVALIDATE) != 0 {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 检查MS_SYNC和MS_ASYNC是否同时设置
+    if (flags & MS_SYNC) != 0 && (flags & MS_ASYNC) != 0 {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 获取当前任务的地址空间
+    let current = current();
+    let mut aspace = current.as_thread().proc_data.aspace.lock();
+
+    // 同步内存区域
+    let start = VirtAddr::from(addr);
+    aspace.sync_area(start, length)?;
+
+    // 处理MS_INVALIDATE标志（可选，当前实现中暂不处理）
+    if flags & MS_INVALIDATE != 0 {
+        // TODO: 实现缓存失效功能
+    }
+
     Ok(0)
 }
 
+/// 锁定内存区域，防止被交换出去
 pub fn sys_mlock(addr: usize, length: usize) -> AxResult<isize> {
     sys_mlock2(addr, length, 0)
 }
 
-pub fn sys_mlock2(_addr: usize, _length: usize, _flags: u32) -> AxResult<isize> {
+/// 带有额外标志的内存锁定函数
+pub fn sys_mlock2(addr: usize, length: usize, flags: u32) -> AxResult<isize> {
+    debug!("sys_mlock2 <= addr: {addr:#x}, length: {length:x}, flags: {flags:#x}");
+
+    // 检查flags是否合法
+    if flags != 0 {
+        // 当前只支持flags=0
+        return Err(AxError::InvalidInput);
+    }
+
+    // 确保长度不为0
+    if length == 0 {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 获取当前任务
+    let curr = current();
+    let mut aspace = curr.as_thread().proc_data.aspace.lock();
+
+    // 对齐地址和长度到4K页面
+    let start = addr.align_down_4k();
+    let end = (addr + length).align_up_4k();
+    let aligned_length = end - start;
+
+    // 验证内存区域是否在地址空间范围内
+    let start_addr = VirtAddr::from(start);
+    if !aspace.contains_range(start_addr, aligned_length) {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 验证内存区域是否可访问
+    if !aspace.can_access_range(start_addr, aligned_length, MappingFlags::READ | MappingFlags::WRITE) {
+        return Err(AxError::InvalidInput);
+    }
+
+    // 使用populate_area功能将内存锁定在物理内存中
+    // 这会将所有页面映射到物理内存，并防止它们被交换出去
+    aspace.populate_area(start_addr, aligned_length, MappingFlags::READ | MappingFlags::WRITE)?;
+
     Ok(0)
 }
