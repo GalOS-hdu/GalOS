@@ -40,3 +40,5 @@ Thumbs.db
 archive/
 docs/
 tools/
+logs/*
+.claude/

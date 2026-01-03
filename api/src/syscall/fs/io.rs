@@ -151,14 +151,28 @@ pub fn sys_fallocate(
 pub fn sys_fsync(fd: c_int) -> AxResult<isize> {
     debug!("sys_fsync <= {fd}");
     let f = File::from_fd(fd)?;
-    f.inner().sync(false)?;
+    let result = f.inner().sync(false);
+
+    match &result {
+        Ok(_) => debug!("[FSYNC] fsync SUCCESS: fd={}", fd),
+        Err(e) => warn!("[FSYNC] fsync FAILED: fd={}, error={:?}", fd, e),
+    }
+
+    result?;
     Ok(0)
 }
 
 pub fn sys_fdatasync(fd: c_int) -> AxResult<isize> {
     debug!("sys_fdatasync <= {fd}");
     let f = File::from_fd(fd)?;
-    f.inner().sync(true)?;
+    let result = f.inner().sync(true);
+
+    match &result {
+        Ok(_) => debug!("[FDATASYNC] fdatasync SUCCESS: fd={}", fd),
+        Err(e) => warn!("[FDATASYNC] fdatasync FAILED: fd={}, error={:?}", fd, e),
+    }
+
+    result?;
     Ok(0)
 }
 

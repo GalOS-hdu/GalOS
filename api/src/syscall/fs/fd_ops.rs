@@ -126,14 +126,15 @@ pub fn sys_openat(
     let mode = mode & !current().as_thread().proc_data.umask();
 
     let log_apk = path.contains("apk") || path.contains("APKINDEX");
+    let path_for_log = if log_apk { Some(path.clone()) } else { None };
     let options = flags_to_options(flags, mode, (sys_geteuid()? as _, sys_getegid()? as _));
     let result = with_fs(dirfd, |fs| options.open(fs, path))
         .and_then(|it| add_to_fd(it, flags as _));
 
-    if log_apk {
+    if let Some(p) = path_for_log {
         match &result {
-            Ok(fd) => info!("[OPEN] openat SUCCESS: fd={}", fd),
-            Err(e) => warn!("[OPEN] openat FAILED: error={:?}", e),
+            Ok(fd) => info!("[OPEN] openat SUCCESS: fd={}, path={}", fd, p),
+            Err(e) => warn!("[OPEN] openat FAILED: path={}, error={:?}", p, e),
         }
     }
 
@@ -151,7 +152,14 @@ pub fn sys_open(path: *const c_char, flags: i32, mode: __kernel_mode_t) -> AxRes
 
 pub fn sys_close(fd: c_int) -> AxResult<isize> {
     debug!("sys_close <= {fd}");
-    close_file_like(fd)?;
+    let result = close_file_like(fd);
+
+    match &result {
+        Ok(_) => debug!("[CLOSE] sys_close SUCCESS: fd={}", fd),
+        Err(e) => warn!("[CLOSE] sys_close FAILED: fd={}, error={:?}", fd, e),
+    }
+
+    result?;
     Ok(0)
 }
 

@@ -1631,6 +1631,7 @@ dependencies = [
 [[package]]
 name = "lwext4_core"
 version = "0.1.0"
+source = "git+https://github.com/c20h30o2/lwext4_core.git?rev=b69aa0a#b69aa0a5afa2b61f15a9ca8dd36a0b7186b3fa3c"
 dependencies = [
  "bitflags 2.10.0",
  "byteorder",

@@ -87,16 +87,23 @@ pub fn sys_chroot(path: *const c_char) -> AxResult<isize> {
 }
 
 pub fn sys_mkdirat(dirfd: i32, path: *const c_char, mode: u32) -> AxResult<isize> {
-    let path = vm_load_string(path)?;
-    debug!("sys_mkdirat <= dirfd: {dirfd}, path: {path}, mode: {mode}");
+    let path_str = vm_load_string(path)?;
+    debug!("sys_mkdirat <= dirfd: {dirfd}, path: {path_str}, mode: {mode}");
 
     let mode = mode & !current().as_thread().proc_data.umask();
     let mode = NodePermission::from_bits_truncate(mode as u16);
 
-    with_fs(dirfd, |fs| {
-        fs.create_dir(path, mode)?;
+    let result = with_fs(dirfd, |fs| {
+        fs.create_dir(path_str.clone(), mode)?;
         Ok(0)
-    })
+    });
+
+    match &result {
+        Ok(_) => info!("[MKDIR] mkdirat SUCCESS: path={}, mode={:#o}", path_str, mode.bits()),
+        Err(e) => warn!("[MKDIR] mkdirat FAILED: path={}, mode={:#o}, error={:?}", path_str, mode.bits(), e),
+    }
+
+    result
 }
 
 // Directory buffer for getdents64 syscall
@@ -189,27 +196,34 @@ pub fn sys_linkat(
     new_path: *const c_char,
     flags: u32,
 ) -> AxResult<isize> {
-    let old_path = old_path.nullable().map(vm_load_string).transpose()?;
-    let new_path = vm_load_string(new_path)?;
+    let old_path_str = old_path.nullable().map(vm_load_string).transpose()?;
+    let new_path_str = vm_load_string(new_path)?;
     debug!(
-        "sys_linkat <= old_dirfd: {old_dirfd}, old_path: {old_path:?}, new_dirfd: {new_dirfd}, \
-         new_path: {new_path}, flags: {flags}"
+        "sys_linkat <= old_dirfd: {old_dirfd}, old_path: {old_path_str:?}, new_dirfd: {new_dirfd}, \
+         new_path: {new_path_str}, flags: {flags}"
     );
 
     if flags != 0 {
         warn!("Unsupported flags: {flags}");
     }
 
-    let old = resolve_at(old_dirfd, old_path.as_deref(), flags)?
+    let old = resolve_at(old_dirfd, old_path_str.as_deref(), flags)?
         .into_file()
         .ok_or(AxError::BadFileDescriptor)?;
     if old.is_dir() {
         return Err(AxError::OperationNotPermitted);
     }
     let (new_dir, new_name) =
-        with_fs(new_dirfd, |fs| fs.resolve_nonexistent(Path::new(&new_path)))?;
+        with_fs(new_dirfd, |fs| fs.resolve_nonexistent(Path::new(&new_path_str)))?;
 
-    new_dir.link(new_name, &old)?;
+    let result = new_dir.link(new_name.clone(), &old);
+
+    match &result {
+        Ok(_) => info!("[LINK] linkat SUCCESS: old={:?}, new={}/{:?}", old_path_str, new_path_str, new_name),
+        Err(e) => warn!("[LINK] linkat FAILED: old={:?}, new={}/{:?}, error={:?}", old_path_str, new_path_str, new_name, e),
+    }
+
+    result?;
     Ok(0)
 }
 
@@ -283,10 +297,17 @@ pub fn sys_symlinkat(
     let linkpath = vm_load_string(linkpath)?;
     debug!("sys_symlinkat <= target: {target:?}, new_dirfd: {new_dirfd}, linkpath: {linkpath:?}");
 
-    with_fs(new_dirfd, |fs| {
-        fs.symlink(target, linkpath)?;
+    let result = with_fs(new_dirfd, |fs| {
+        fs.symlink(target.clone(), linkpath.clone())?;
         Ok(0)
-    })
+    });
+
+    match &result {
+        Ok(_) => info!("[SYMLINK] symlinkat SUCCESS: target={}, linkpath={}", target, linkpath),
+        Err(e) => warn!("[SYMLINK] symlinkat FAILED: target={}, linkpath={}, error={:?}", target, linkpath, e),
+    }
+
+    result
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -335,8 +356,8 @@ pub fn sys_fchownat(
     gid: i32,
     flags: u32,
 ) -> AxResult<isize> {
-    let path = path.nullable().map(vm_load_string).transpose()?;
-    let loc = resolve_at(dirfd, path.as_deref(), flags)?
+    let path_str = path.nullable().map(vm_load_string).transpose()?;
+    let loc = resolve_at(dirfd, path_str.as_deref(), flags)?
         .into_file()
         .ok_or(AxError::BadFileDescriptor)?;
     let meta = loc.metadata()?;
@@ -351,11 +372,18 @@ pub fn sys_fchownat(
 
     let uid = if uid == -1 { meta.uid } else { uid as _ };
     let gid = if gid == -1 { meta.gid } else { gid as _ };
-    loc.update_metadata(MetadataUpdate {
+    let result = loc.update_metadata(MetadataUpdate {
         owner: Some((uid, gid)),
         mode: Some(mode),
         ..Default::default()
-    })?;
+    });
+
+    match &result {
+        Ok(_) => info!("[CHOWN] fchownat SUCCESS: path={:?}, uid={}, gid={}", path_str, uid, gid),
+        Err(e) => warn!("[CHOWN] fchownat FAILED: path={:?}, uid={}, gid={}, error={:?}", path_str, uid, gid, e),
+    }
+
+    result?;
     Ok(0)
 }
 
@@ -370,13 +398,20 @@ pub fn sys_fchmod(fd: i32, mode: u32) -> AxResult<isize> {
 
 pub fn sys_fchmodat(dirfd: i32, path: *const c_char, mode: u32, flags: u32) -> AxResult<isize> {
     let path = path.nullable().map(vm_load_string).transpose()?;
-    resolve_at(dirfd, path.as_deref(), flags)?
+    let result = resolve_at(dirfd, path.as_deref(), flags)?
         .into_file()
         .ok_or(AxError::BadFileDescriptor)?
         .update_metadata(MetadataUpdate {
             mode: Some(NodePermission::from_bits_truncate(mode as u16)),
             ..Default::default()
-        })?;
+        });
+
+    match &result {
+        Ok(_) => info!("[CHMOD] fchmodat SUCCESS: path={:?}, mode={:#o}", path, mode),
+        Err(e) => warn!("[CHMOD] fchmodat FAILED: path={:?}, mode={:#o}, error={:?}", path, mode, e),
+    }
+
+    result?;
     Ok(0)
 }
 
@@ -473,7 +508,15 @@ pub fn sys_utimensat(
         return Ok(0);
     }
 
-    update_times(dirfd, path, atime, mtime, flags)?;
+    let path_str = path.nullable().map(vm_load_string).transpose()?;
+    let result = update_times(dirfd, path, atime, mtime, flags);
+
+    match &result {
+        Ok(_) => info!("[UTIMENS] utimensat SUCCESS: path={:?}", path_str),
+        Err(e) => warn!("[UTIMENS] utimensat FAILED: path={:?}, error={:?}", path_str, e),
+    }
+
+    result?;
     Ok(0)
 }
 
@@ -498,18 +541,25 @@ pub fn sys_renameat2(
     new_path: *const c_char,
     flags: u32,
 ) -> AxResult<isize> {
-    let old_path = vm_load_string(old_path)?;
-    let new_path = vm_load_string(new_path)?;
+    let old_path_str = vm_load_string(old_path)?;
+    let new_path_str = vm_load_string(new_path)?;
     debug!(
-        "sys_renameat2 <= old_dirfd: {old_dirfd}, old_path: {old_path:?}, new_dirfd: {new_dirfd}, \
-         new_path: {new_path}, flags: {flags}"
+        "sys_renameat2 <= old_dirfd: {old_dirfd}, old_path: {old_path_str:?}, new_dirfd: {new_dirfd}, \
+         new_path: {new_path_str}, flags: {flags}"
     );
 
-    let (old_dir, old_name) = with_fs(old_dirfd, |fs| fs.resolve_parent(Path::new(&old_path)))?;
+    let (old_dir, old_name) = with_fs(old_dirfd, |fs| fs.resolve_parent(Path::new(&old_path_str)))?;
     let (new_dir, new_name) =
-        with_fs(new_dirfd, |fs| fs.resolve_nonexistent(Path::new(&new_path)))?;
+        with_fs(new_dirfd, |fs| fs.resolve_nonexistent(Path::new(&new_path_str)))?;
 
-    old_dir.rename(&old_name, &new_dir, new_name)?;
+    let result = old_dir.rename(&old_name, &new_dir, new_name.clone());
+
+    match &result {
+        Ok(_) => info!("[RENAME] renameat2 SUCCESS: old={}, new={}", old_path_str, new_path_str),
+        Err(e) => warn!("[RENAME] renameat2 FAILED: old={}, new={}, error={:?}", old_path_str, new_path_str, e),
+    }
+
+    result?;
     Ok(0)
 }
 
