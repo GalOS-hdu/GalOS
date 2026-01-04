@@ -1,0 +1,149 @@
+@startuml
+' =====================================================
+' 全局样式
+' =====================================================
+skinparam backgroundColor #FFF4CC
+skinparam shadowing false
+skinparam roundcorner 18
+skinparam defaultFontSize 14
+
+skinparam package {
+  BorderColor #444444
+  BackgroundColor #FFE0A3
+}
+
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor white
+}
+
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1.5
+
+' =====================================================
+' API / 入口层
+' =====================================================
+package "API / 入口层" #D6EEF5 {
+  rectangle "lib.rs\ncrate entry" as LIB
+  rectangle "c_api\n(C compatibility)" as CAPI
+}
+
+' =====================================================
+' 文件系统核心层
+' =====================================================
+package "文件系统核心 (fs)" #FFCC8A {
+  rectangle "fs\nfilesystem / file\nmetadata / types" as FS
+  rectangle "transaction\n(simple / journal)" as TRANS
+}
+
+' =====================================================
+' 文件 / 命名空间
+' =====================================================
+package "文件 / 命名空间" #FFE8C7 {
+
+  package "目录 (dir)" {
+    rectangle "dir\n(entry / lookup /\nhtree / hash)" as DIR
+  }
+
+  package "扩展属性 (xattr)" {
+    rectangle "xattr\n(api / block /\nibody / search)" as XATTR
+  }
+}
+
+' =====================================================
+' 块映射层
+' =====================================================
+package "块映射层" #FFF1B8 {
+
+  package "Extent Tree" {
+    rectangle "extent\ntree / insert /\nremove / split /\nunwritten" as EXTENT
+  }
+
+  package "Indirect Block" {
+    rectangle "indirect\n(legacy mapper)" as INDIRECT
+  }
+}
+
+' =====================================================
+' 元数据管理
+' =====================================================
+package "元数据管理" #D9F2D9 {
+  rectangle "inode\n(read / write /\nchecksum)" as INODE
+  rectangle "superblock\n(read / write)" as SB
+  rectangle "block_group\n(read / write)" as BG
+}
+
+' =====================================================
+' 资源分配
+' =====================================================
+package "资源分配" #FFD6C9 {
+  rectangle "ialloc\n(inode allocator)" as IALLOC
+  rectangle "balloc\n(block allocator)" as BALLOC
+  rectangle "bitmap\n(bit operations)" as BITMAP
+}
+
+' =====================================================
+' 日志系统
+' =====================================================
+package "日志系统 (JBD)" #E4DDF7 {
+  rectangle "journal\n(commit / recovery)" as JOURNAL
+}
+
+' =====================================================
+' 缓存与块设备
+' =====================================================
+package "缓存与块设备" #F8C8DA {
+  rectangle "cache\n(block_cache / buffer)" as CACHE
+  rectangle "block\n(device / io /\nhandle / lock)" as BLOCK
+}
+
+' =====================================================
+' 基础设施
+' =====================================================
+package "基础设施" #E0E0E0 {
+  rectangle "utils\n(queue / tree)" as UTILS
+  rectangle "crc" as CRC
+  rectangle "consts" as CONSTS
+  rectangle "types" as TYPES
+  rectangle "error" as ERROR
+}
+
+' =====================================================
+' 层级关系（现在全部合法）
+' =====================================================
+LIB --> FS
+CAPI --> BLOCK
+
+FS --> DIR
+FS --> XATTR
+FS --> INODE
+
+DIR --> INODE
+XATTR --> INODE
+
+INODE --> EXTENT
+INODE --> INDIRECT
+
+EXTENT --> BALLOC
+INDIRECT --> BALLOC
+
+INODE --> IALLOC
+
+IALLOC --> BITMAP
+BALLOC --> BITMAP
+
+FS --> TRANS
+TRANS --> JOURNAL
+
+JOURNAL --> BLOCK
+BALLOC --> BLOCK
+INODE --> BLOCK
+
+BLOCK --> CACHE
+
+FS --> UTILS
+FS --> TYPES
+FS --> ERROR
+FS --> CRC
+
+@enduml

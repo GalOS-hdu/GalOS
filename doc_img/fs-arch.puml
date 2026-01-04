@@ -1,0 +1,94 @@
+@startuml
+' ================== 全局样式 ==================
+skinparam backgroundColor #FFF4CC
+skinparam shadowing false
+skinparam roundcorner 18
+skinparam defaultFontSize 14
+
+skinparam package {
+  BorderColor #444444
+  BackgroundColor #FFE0A3
+}
+
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor white
+}
+
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1.5
+
+' ================== 系统调用接口层 ==================
+package "系统调用接口层" #D6EEF5 {
+  rectangle "fs / read / write / open\nmkdir / unlink / exit\nfork / exec" as SYSCALL
+}
+
+' ================== 文件系统核心架构 ==================
+package "文件系统核心架构" #FFCC8A {
+
+  package "文件与目录管理" #FFE8C7 {
+    rectangle "extent" as EXTENT
+    rectangle "indirect" as INDIRECT
+    rectangle "dir" as DIR
+    rectangle "xattr" as XATTR
+  }
+
+  package "元数据管理" #D9F2D9 {
+    rectangle "inode" as INODE
+    rectangle "superblock" as SB
+    rectangle "block group" as BG
+  }
+
+  package "资源分配" #FFD6C9 {
+    rectangle "balloc" as BALLOC
+    rectangle "ialloc" as IALLOC
+    rectangle "bitmap" as BITMAP
+  }
+
+  package "事务与日志" #E4DDF7 {
+    rectangle "transaction" as TRANS
+    rectangle "journal (JBD)" as JOURNAL
+  }
+
+  package "缓存与块设备接口" #F8C8DA {
+    rectangle "cache" as CACHE
+    rectangle "block device" as BLOCK
+  }
+}
+
+' ================== 基础设施层 ==================
+package "基础设施层" #E0E0E0 {
+  rectangle "utils"
+  rectangle "types"
+  rectangle "error"
+  rectangle "consts"
+  rectangle "crc"
+}
+
+' ================== 硬件层 ==================
+package "硬件层 (QEMU RISC-V 64)" #BFD7F0 {
+  rectangle "UART"
+  rectangle "Console"
+  rectangle "Timer"
+}
+
+' ================== 层级关系（极简） ==================
+SYSCALL --> EXTENT
+SYSCALL --> INODE
+
+EXTENT --> INODE
+DIR --> INODE
+
+INODE --> BALLOC
+INODE --> IALLOC
+
+BALLOC --> CACHE
+IALLOC --> CACHE
+
+CACHE --> BLOCK
+JOURNAL --> BLOCK
+
+BLOCK --> UART
+BLOCK --> Timer
+
+@enduml
