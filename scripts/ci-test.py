@@ -46,7 +46,7 @@ try:
     if p.poll() is not None:
         raise Exception("QEMU exited prematurely")
 
-    PROMPT = "starry:~#"
+    PROMPT = "gal:~#"
 
     s = socket.create_connection(("localhost", 4444), timeout=5)
     buffer = ""

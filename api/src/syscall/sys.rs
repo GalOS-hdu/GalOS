@@ -70,7 +70,7 @@ const fn pad_str(info: &str) -> [c_char; 65] {
 
 const UTSNAME: new_utsname = new_utsname {
     sysname: pad_str("Linux"),
-    nodename: pad_str("starry"),
+    nodename: pad_str("gal"),
     release: pad_str("10.0.0"),
     version: pad_str("10.0.0"),
     machine: pad_str(ARCH),

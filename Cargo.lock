@@ -415,7 +415,7 @@ dependencies = [
  "intrusive-collections",
  "kspin",
  "log",
- "lru",
+ "lru 0.16.2",
  "lwext4_core",
  "lwext4_rust",
  "scope-local",
@@ -1621,6 +1621,15 @@ dependencies = [
 
 [[package]]
 name = "lru"
+version = "0.12.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "234cf4f4a04dc1f57e24b96cc0cd600cf2af460d4161ac5ecdd0af8e1f3b2a38"
+dependencies = [
+ "hashbrown 0.15.5",
+]
+
+[[package]]
+name = "lru"
 version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96051b46fc183dc9cd4a223960ef37b9af631b55191852a8274bfef064cda20f"
@@ -1631,12 +1640,13 @@ dependencies = [
 [[package]]
 name = "lwext4_core"
 version = "0.1.0"
-source = "git+https://github.com/c20h30o2/lwext4_core.git?rev=b69aa0a#b69aa0a5afa2b61f15a9ca8dd36a0b7186b3fa3c"
+source = "git+https://github.com/GalOS-hdu/lwext4_core.git?rev=94eb56a#94eb56af200076a8b6e92b2287476f3e4b93e8e9"
 dependencies = [
  "bitflags 2.10.0",
  "byteorder",
  "crc32fast",
  "log",
+ "lru 0.12.5",
 ]
 
 [[package]]

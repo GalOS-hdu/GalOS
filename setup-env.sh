@@ -1,6 +1,6 @@
 #!/bin/bash
 # GalOS Environment Setup Script
-# This script helps set up the development environment for StarryOS
+# This script helps set up the development environment for GalOS
 
 set -e
 
@@ -264,7 +264,7 @@ case $choice in
         command -v riscv64-linux-musl-gcc &> /dev/null || ALL_OK=false
 
         if [ "$ALL_OK" = true ]; then
-            success "Environment looks good! You can start building StarryOS."
+            success "Environment looks good! You can start building GalOS."
             echo ""
             echo "Run: make build && make img && make run"
         else

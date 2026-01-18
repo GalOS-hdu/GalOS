@@ -101,7 +101,8 @@ pub fn sys_mkdirat(dirfd: i32, path: *const c_char, mode: u32) -> AxResult<isize
 
     match &result {
         Ok(_) => info!("[MKDIR] mkdirat SUCCESS: path={}, mode={:#o}", path_str, mode.bits()),
-        Err(e) => warn!("[MKDIR] mkdirat FAILED: path={}, mode={:#o}, error={:?}", path_str, mode.bits(), e),
+        // prepare for contest replace warn with info
+        Err(e) => info!("[MKDIR] mkdirat FAILED: path={}, mode={:#o}, error={:?}", path_str, mode.bits(), e),
     }
 
     result
@@ -305,7 +306,8 @@ pub fn sys_symlinkat(
 
     match &result {
         Ok(_) => info!("[SYMLINK] symlinkat SUCCESS: target={}, linkpath={}", target, linkpath),
-        Err(e) => warn!("[SYMLINK] symlinkat FAILED: target={}, linkpath={}, error={:?}", target, linkpath, e),
+        // prepare for contest replace warn with info
+        Err(e) => info!("[SYMLINK] symlinkat FAILED: target={}, linkpath={}, error={:?}", target, linkpath, e),
     }
 
     result

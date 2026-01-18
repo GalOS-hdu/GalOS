@@ -5,7 +5,7 @@ set -e
 # This script handles permission fixes for mounted volumes and user switching
 
 # Default username
-USERNAME=${USERNAME:-starry}
+USERNAME=${USERNAME:-gal}
 USER_UID=${USER_UID:-1000}
 USER_GID=${USER_GID:-1000}
 

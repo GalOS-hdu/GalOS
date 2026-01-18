@@ -42,3 +42,4 @@ docs/*
 tools/*
 /logs/*
 .claude/*
+scripts/tests-*

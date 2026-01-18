@@ -152,7 +152,7 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Create a non-root user for development
-ARG USERNAME=starry
+ARG USERNAME=gal
 ARG USER_UID=1001
 ARG USER_GID=$USER_UID
 

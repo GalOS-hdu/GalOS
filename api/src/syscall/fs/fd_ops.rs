@@ -135,7 +135,8 @@ pub fn sys_openat(
     if let Some(p) = path_for_log {
         match &result {
             Ok(fd) => info!("[OPEN] openat SUCCESS: fd={}, path={}", fd, p),
-            Err(e) => warn!("[OPEN] openat FAILED: path={}, error={:?}", p, e),
+            // prepare for contest replace warn with info
+            Err(e) => info!("[OPEN] openat FAILED: path={}, error={:?}", p, e),
         }
     }
 

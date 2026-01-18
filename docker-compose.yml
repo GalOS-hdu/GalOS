@@ -7,7 +7,7 @@ services:
         QEMU_VERSION: "10.1.0"
         RUST_VERSION: "nightly-2025-05-20"
         MUSL_TOOLCHAIN_VERSION: "20241227"
-        USERNAME: starry
+        USERNAME: gal
         USER_UID: 1000
         USER_GID: 1000
     image: galos-dev:latest
