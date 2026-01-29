@@ -119,6 +119,54 @@ impl File {
     fn is_blocking(&self) -> bool {
         self.inner.location().flags().contains(NodeFlags::BLOCKING)
     }
+
+    /// Lists all extended attribute names.
+    ///
+    /// Returns a list of null-terminated attribute names.
+    pub fn listxattr(&self, buffer: &mut [u8]) -> AxResult<usize> {
+        self.inner
+            .location()
+            .listxattr(buffer)
+            .map_err(AxError::from)
+    }
+
+    /// Gets the value of an extended attribute.
+    ///
+    /// # Arguments
+    /// * `name` - The attribute name (with namespace prefix, e.g., "user.comment")
+    /// * `buffer` - Buffer to store the attribute value
+    ///
+    /// Returns the size of the attribute value.
+    pub fn getxattr(&self, name: &str, buffer: &mut [u8]) -> AxResult<usize> {
+        self.inner
+            .location()
+            .getxattr(name, buffer)
+            .map_err(AxError::from)
+    }
+
+    /// Sets the value of an extended attribute.
+    ///
+    /// # Arguments
+    /// * `name` - The attribute name (with namespace prefix)
+    /// * `value` - The attribute value to set
+    /// * `flags` - Creation flags (XATTR_CREATE=0x1, XATTR_REPLACE=0x2)
+    pub fn setxattr(&self, name: &str, value: &[u8], flags: u32) -> AxResult<()> {
+        self.inner
+            .location()
+            .setxattr(name, value, flags)
+            .map_err(AxError::from)
+    }
+
+    /// Removes an extended attribute.
+    ///
+    /// # Arguments
+    /// * `name` - The attribute name to remove
+    pub fn removexattr(&self, name: &str) -> AxResult<()> {
+        self.inner
+            .location()
+            .removexattr(name)
+            .map_err(AxError::from)
+    }
 }
 
 fn path_for(loc: &Location) -> Cow<'static, str> {
@@ -216,6 +264,28 @@ impl Directory {
     /// Get the inner node of the directory.
     pub fn inner(&self) -> &Location {
         &self.inner
+    }
+
+    /// Lists all extended attribute names.
+    pub fn listxattr(&self, buffer: &mut [u8]) -> AxResult<usize> {
+        self.inner.listxattr(buffer).map_err(AxError::from)
+    }
+
+    /// Gets the value of an extended attribute.
+    pub fn getxattr(&self, name: &str, buffer: &mut [u8]) -> AxResult<usize> {
+        self.inner.getxattr(name, buffer).map_err(AxError::from)
+    }
+
+    /// Sets the value of an extended attribute.
+    pub fn setxattr(&self, name: &str, value: &[u8], flags: u32) -> AxResult<()> {
+        self.inner
+            .setxattr(name, value, flags)
+            .map_err(AxError::from)
+    }
+
+    /// Removes an extended attribute.
+    pub fn removexattr(&self, name: &str) -> AxResult<()> {
+        self.inner.removexattr(name).map_err(AxError::from)
     }
 }
 

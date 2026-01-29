@@ -335,6 +335,73 @@ pub fn handle_syscall(uctx: &mut UserContext) {
         Sysno::statfs => sys_statfs(uctx.arg0() as _, uctx.arg1() as _),
         Sysno::fstatfs => sys_fstatfs(uctx.arg0() as _, uctx.arg1() as _),
 
+        // xattr
+        #[cfg(target_arch = "x86_64")]
+        Sysno::getxattr => sys_getxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+            uctx.arg3() as _,
+        ),
+        #[cfg(target_arch = "x86_64")]
+        Sysno::lgetxattr => sys_lgetxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+            uctx.arg3() as _,
+        ),
+        Sysno::fgetxattr => sys_fgetxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+            uctx.arg3() as _,
+        ),
+        #[cfg(target_arch = "x86_64")]
+        Sysno::setxattr => sys_setxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+            uctx.arg3() as _,
+            uctx.arg4() as _,
+        ),
+        #[cfg(target_arch = "x86_64")]
+        Sysno::lsetxattr => sys_lsetxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+            uctx.arg3() as _,
+            uctx.arg4() as _,
+        ),
+        Sysno::fsetxattr => sys_fsetxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+            uctx.arg3() as _,
+            uctx.arg4() as _,
+        ),
+        #[cfg(target_arch = "x86_64")]
+        Sysno::listxattr => sys_listxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+        ),
+        #[cfg(target_arch = "x86_64")]
+        Sysno::llistxattr => sys_llistxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+        ),
+        Sysno::flistxattr => sys_flistxattr(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+        ),
+        #[cfg(target_arch = "x86_64")]
+        Sysno::removexattr => sys_removexattr(uctx.arg0() as _, uctx.arg1() as _),
+        #[cfg(target_arch = "x86_64")]
+        Sysno::lremovexattr => sys_lremovexattr(uctx.arg0() as _, uctx.arg1() as _),
+        Sysno::fremovexattr => sys_fremovexattr(uctx.arg0() as _, uctx.arg1() as _),
+
         // mm
         Sysno::brk => sys_brk(uctx.arg0() as _),
         Sysno::mmap => sys_mmap(
