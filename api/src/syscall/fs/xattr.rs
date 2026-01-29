@@ -1,24 +1,16 @@
 use core::ffi::{c_char, c_int};
+extern crate alloc;
 
 use axerrno::{AxError, AxResult};
 use linux_raw_sys::general::{AT_EMPTY_PATH, AT_FDCWD, AT_SYMLINK_NOFOLLOW};
-use starry_vm::{VmMutPtr, VmPtr};
+use starry_vm::{VmPtr, vm_read_slice, vm_write_slice};
 
 use crate::{
-    file::{Directory, File, FileLike, get_file_like, resolve_at},
+    file::{Directory, File, get_file_like, with_fs},
     mm::vm_load_string,
 };
 
 /// Get the value of an extended attribute by path
-///
-/// # Arguments
-/// * `path` - File path
-/// * `name` - Attribute name (with namespace prefix, e.g., "user.comment")
-/// * `value` - Buffer to store the attribute value
-/// * `size` - Size of the buffer
-///
-/// Returns the size of the attribute value, or error if not found
-#[cfg(target_arch = "x86_64")]
 pub fn sys_getxattr(
     path: *const c_char,
     name: *const c_char,
@@ -29,7 +21,6 @@ pub fn sys_getxattr(
 }
 
 /// Get the value of an extended attribute by path (don't follow symlinks)
-#[cfg(target_arch = "x86_64")]
 pub fn sys_lgetxattr(
     path: *const c_char,
     name: *const c_char,
@@ -59,80 +50,68 @@ fn sys_fgetxattrat(
     flags: u32,
 ) -> AxResult<isize> {
     let path = path.nullable().map(vm_load_string).transpose()?;
-    let name = name.vm_load_cstr()?;
+    let name = vm_load_string(name)?;
 
     debug!(
         "sys_getxattr <= dirfd: {dirfd}, path: {path:?}, name: {name:?}, size: {size}"
     );
 
-    // Resolve the file or get from fd
+    // Get file_like
     let file_like = if path.is_none() && flags & AT_EMPTY_PATH != 0 {
         get_file_like(dirfd)?
     } else {
-        let loc = resolve_at(dirfd, path.as_deref(), flags)?
-            .into_file()
-            .ok_or(AxError::NotSupported)?;
-        crate::file::new_file(loc)?
+        // For path-based access, we need to open it through the VFS
+        // Use with_fs to resolve and open the file
+        return with_fs(dirfd, |fs| {
+            let loc = if flags & AT_SYMLINK_NOFOLLOW != 0 {
+                fs.resolve_no_follow(path.as_deref().unwrap_or(""))?
+            } else {
+                fs.resolve(path.as_deref().unwrap_or(""))?
+            };
+
+            if size == 0 {
+                // Query size
+                let mut temp = alloc::vec![0u8; 65536];
+                loc.getxattr(&name, &mut temp).map(|len| len as isize)
+            } else {
+                let mut buffer = alloc::vec![0u8; size];
+                let len = loc.getxattr(&name, &mut buffer)?;
+                vm_write_slice(value, &buffer[..len])?;
+                Ok(len as isize)
+            }
+        });
     };
 
     // Try to downcast to File or Directory
     let any = file_like.into_any();
     let result = if let Some(file) = any.downcast_ref::<File>() {
         if size == 0 {
-            // Query size
-            let mut dummy = [0u8; 1];
-            file.getxattr(&name, &mut dummy)
-                .or_else(|e| {
-                    // If buffer too small, that means the attribute exists
-                    // We need to get the actual size
-                    if e == AxError::InvalidInput {
-                        // Try with a larger buffer to get the size
-                        let mut temp = vec![0u8; 65536];
-                        file.getxattr(&name, &mut temp)
-                    } else {
-                        Err(e)
-                    }
-                })
+            let mut temp = alloc::vec![0u8; 65536];
+            file.getxattr(&name, &mut temp).map(|len| len as isize)?
         } else {
-            let mut buffer = vec![0u8; size];
+            let mut buffer = alloc::vec![0u8; size];
             let len = file.getxattr(&name, &mut buffer)?;
-            value.vm_write_bytes(&buffer[..len])?;
-            Ok(len)
+            vm_write_slice(value, &buffer[..len])?;
+            len as isize
         }
     } else if let Some(dir) = any.downcast_ref::<Directory>() {
         if size == 0 {
-            let mut dummy = [0u8; 1];
-            dir.getxattr(&name, &mut dummy)
-                .or_else(|e| {
-                    if e == AxError::InvalidInput {
-                        let mut temp = vec![0u8; 65536];
-                        dir.getxattr(&name, &mut temp)
-                    } else {
-                        Err(e)
-                    }
-                })
+            let mut temp = alloc::vec![0u8; 65536];
+            dir.getxattr(&name, &mut temp).map(|len| len as isize)?
         } else {
-            let mut buffer = vec![0u8; size];
+            let mut buffer = alloc::vec![0u8; size];
             let len = dir.getxattr(&name, &mut buffer)?;
-            value.vm_write_bytes(&buffer[..len])?;
-            Ok(len)
+            vm_write_slice(value, &buffer[..len])?;
+            len as isize
         }
     } else {
-        Err(AxError::NotSupported)
-    }?;
+        return Err(AxError::OperationNotSupported);
+    };
 
-    Ok(result as isize)
+    Ok(result)
 }
 
 /// Set the value of an extended attribute by path
-///
-/// # Arguments
-/// * `path` - File path
-/// * `name` - Attribute name
-/// * `value` - Attribute value to set
-/// * `size` - Size of the value
-/// * `flags` - Creation flags (XATTR_CREATE=0x1, XATTR_REPLACE=0x2)
-#[cfg(target_arch = "x86_64")]
 pub fn sys_setxattr(
     path: *const c_char,
     name: *const c_char,
@@ -144,7 +123,6 @@ pub fn sys_setxattr(
 }
 
 /// Set the value of an extended attribute by path (don't follow symlinks)
-#[cfg(target_arch = "x86_64")]
 pub fn sys_lsetxattr(
     path: *const c_char,
     name: *const c_char,
@@ -193,21 +171,28 @@ fn sys_fsetxattrat(
     resolve_flags: u32,
 ) -> AxResult<isize> {
     let path = path.nullable().map(vm_load_string).transpose()?;
-    let name = name.vm_load_cstr()?;
-    let value_buf = value.vm_load_bytes(size)?;
+    let name = vm_load_string(name)?;
+    let mut value_buf_uninit: alloc::vec::Vec<core::mem::MaybeUninit<u8>> = alloc::vec![core::mem::MaybeUninit::uninit(); size];
+    vm_read_slice(value, &mut value_buf_uninit)?;
+    let value_buf: alloc::vec::Vec<u8> = unsafe { core::mem::transmute(value_buf_uninit) };
 
     debug!(
         "sys_setxattr <= dirfd: {dirfd}, path: {path:?}, name: {name:?}, size: {size}, flags: {xattr_flags}"
     );
 
-    // Resolve the file or get from fd
+    // Get file_like
     let file_like = if path.is_none() && resolve_flags & AT_EMPTY_PATH != 0 {
         get_file_like(dirfd)?
     } else {
-        let loc = resolve_at(dirfd, path.as_deref(), resolve_flags)?
-            .into_file()
-            .ok_or(AxError::NotSupported)?;
-        crate::file::new_file(loc)?
+        return with_fs(dirfd, |fs| {
+            let loc = if resolve_flags & AT_SYMLINK_NOFOLLOW != 0 {
+                fs.resolve_no_follow(path.as_deref().unwrap_or(""))?
+            } else {
+                fs.resolve(path.as_deref().unwrap_or(""))?
+            };
+            loc.setxattr(&name, &value_buf, xattr_flags)?;
+            Ok(0)
+        });
     };
 
     // Try to downcast to File or Directory
@@ -217,22 +202,18 @@ fn sys_fsetxattrat(
     } else if let Some(dir) = any.downcast_ref::<Directory>() {
         dir.setxattr(&name, &value_buf, xattr_flags)?;
     } else {
-        return Err(AxError::NotSupported);
+        return Err(AxError::OperationNotSupported);
     }
 
     Ok(0)
 }
 
 /// List all extended attribute names by path
-///
-/// Returns a list of null-terminated attribute names
-#[cfg(target_arch = "x86_64")]
 pub fn sys_listxattr(path: *const c_char, list: *mut u8, size: usize) -> AxResult<isize> {
     sys_flistxattrat(AT_FDCWD, path, list, size, 0)
 }
 
 /// List all extended attribute names by path (don't follow symlinks)
-#[cfg(target_arch = "x86_64")]
 pub fn sys_llistxattr(path: *const c_char, list: *mut u8, size: usize) -> AxResult<isize> {
     sys_flistxattrat(AT_FDCWD, path, list, size, AT_SYMLINK_NOFOLLOW)
 }
@@ -254,54 +235,64 @@ fn sys_flistxattrat(
 
     debug!("sys_listxattr <= dirfd: {dirfd}, path: {path:?}, size: {size}");
 
-    // Resolve the file or get from fd
+    // Get file_like
     let file_like = if path.is_none() && flags & AT_EMPTY_PATH != 0 {
         get_file_like(dirfd)?
     } else {
-        let loc = resolve_at(dirfd, path.as_deref(), flags)?
-            .into_file()
-            .ok_or(AxError::NotSupported)?;
-        crate::file::new_file(loc)?
+        return with_fs(dirfd, |fs| {
+            let loc = if flags & AT_SYMLINK_NOFOLLOW != 0 {
+                fs.resolve_no_follow(path.as_deref().unwrap_or(""))?
+            } else {
+                fs.resolve(path.as_deref().unwrap_or(""))?
+            };
+
+            if size == 0 {
+                let mut temp = alloc::vec![0u8; 65536];
+                loc.listxattr(&mut temp).map(|len| len as isize)
+            } else {
+                let mut buffer = alloc::vec![0u8; size];
+                let len = loc.listxattr(&mut buffer)?;
+                vm_write_slice(list, &buffer[..len])?;
+                Ok(len as isize)
+            }
+        });
     };
 
     // Try to downcast to File or Directory
     let any = file_like.into_any();
     let result = if let Some(file) = any.downcast_ref::<File>() {
         if size == 0 {
-            // Query size
-            let mut temp = vec![0u8; 65536];
-            file.listxattr(&mut temp)
+            let mut temp = alloc::vec![0u8; 65536];
+            file.listxattr(&mut temp).map(|len| len as isize)?
         } else {
-            let mut buffer = vec![0u8; size];
+            let mut buffer = alloc::vec![0u8; size];
             let len = file.listxattr(&mut buffer)?;
-            list.vm_write_bytes(&buffer[..len])?;
-            Ok(len)
+            vm_write_slice(list, &buffer[..len])?;
+            len as isize
         }
     } else if let Some(dir) = any.downcast_ref::<Directory>() {
         if size == 0 {
-            let mut temp = vec![0u8; 65536];
-            dir.listxattr(&mut temp)
+            let mut temp = alloc::vec![0u8; 65536];
+            dir.listxattr(&mut temp).map(|len| len as isize)?
         } else {
-            let mut buffer = vec![0u8; size];
+            let mut buffer = alloc::vec![0u8; size];
             let len = dir.listxattr(&mut buffer)?;
-            list.vm_write_bytes(&buffer[..len])?;
-            Ok(len)
+            vm_write_slice(list, &buffer[..len])?;
+            len as isize
         }
     } else {
-        Err(AxError::NotSupported)
-    }?;
+        return Err(AxError::OperationNotSupported);
+    };
 
-    Ok(result as isize)
+    Ok(result)
 }
 
 /// Remove an extended attribute by path
-#[cfg(target_arch = "x86_64")]
 pub fn sys_removexattr(path: *const c_char, name: *const c_char) -> AxResult<isize> {
     sys_fremovexattrat(AT_FDCWD, path, name, 0)
 }
 
 /// Remove an extended attribute by path (don't follow symlinks)
-#[cfg(target_arch = "x86_64")]
 pub fn sys_lremovexattr(path: *const c_char, name: *const c_char) -> AxResult<isize> {
     sys_fremovexattrat(AT_FDCWD, path, name, AT_SYMLINK_NOFOLLOW)
 }
@@ -319,18 +310,23 @@ fn sys_fremovexattrat(
     flags: u32,
 ) -> AxResult<isize> {
     let path = path.nullable().map(vm_load_string).transpose()?;
-    let name = name.vm_load_cstr()?;
+    let name = vm_load_string(name)?;
 
     debug!("sys_removexattr <= dirfd: {dirfd}, path: {path:?}, name: {name:?}");
 
-    // Resolve the file or get from fd
+    // Get file_like
     let file_like = if path.is_none() && flags & AT_EMPTY_PATH != 0 {
         get_file_like(dirfd)?
     } else {
-        let loc = resolve_at(dirfd, path.as_deref(), flags)?
-            .into_file()
-            .ok_or(AxError::NotSupported)?;
-        crate::file::new_file(loc)?
+        return with_fs(dirfd, |fs| {
+            let loc = if flags & AT_SYMLINK_NOFOLLOW != 0 {
+                fs.resolve_no_follow(path.as_deref().unwrap_or(""))?
+            } else {
+                fs.resolve(path.as_deref().unwrap_or(""))?
+            };
+            loc.removexattr(&name)?;
+            Ok(0)
+        });
     };
 
     // Try to downcast to File or Directory
@@ -340,7 +336,7 @@ fn sys_fremovexattrat(
     } else if let Some(dir) = any.downcast_ref::<Directory>() {
         dir.removexattr(&name)?;
     } else {
-        return Err(AxError::NotSupported);
+        return Err(AxError::OperationNotSupported);
     }
 
     Ok(0)

@@ -336,14 +336,12 @@ pub fn handle_syscall(uctx: &mut UserContext) {
         Sysno::fstatfs => sys_fstatfs(uctx.arg0() as _, uctx.arg1() as _),
 
         // xattr
-        #[cfg(target_arch = "x86_64")]
         Sysno::getxattr => sys_getxattr(
             uctx.arg0() as _,
             uctx.arg1() as _,
             uctx.arg2() as _,
             uctx.arg3() as _,
         ),
-        #[cfg(target_arch = "x86_64")]
         Sysno::lgetxattr => sys_lgetxattr(
             uctx.arg0() as _,
             uctx.arg1() as _,
@@ -356,7 +354,6 @@ pub fn handle_syscall(uctx: &mut UserContext) {
             uctx.arg2() as _,
             uctx.arg3() as _,
         ),
-        #[cfg(target_arch = "x86_64")]
         Sysno::setxattr => sys_setxattr(
             uctx.arg0() as _,
             uctx.arg1() as _,
@@ -364,7 +361,6 @@ pub fn handle_syscall(uctx: &mut UserContext) {
             uctx.arg3() as _,
             uctx.arg4() as _,
         ),
-        #[cfg(target_arch = "x86_64")]
         Sysno::lsetxattr => sys_lsetxattr(
             uctx.arg0() as _,
             uctx.arg1() as _,
@@ -379,13 +375,11 @@ pub fn handle_syscall(uctx: &mut UserContext) {
             uctx.arg3() as _,
             uctx.arg4() as _,
         ),
-        #[cfg(target_arch = "x86_64")]
         Sysno::listxattr => sys_listxattr(
             uctx.arg0() as _,
             uctx.arg1() as _,
             uctx.arg2() as _,
         ),
-        #[cfg(target_arch = "x86_64")]
         Sysno::llistxattr => sys_llistxattr(
             uctx.arg0() as _,
             uctx.arg1() as _,
@@ -396,9 +390,7 @@ pub fn handle_syscall(uctx: &mut UserContext) {
             uctx.arg1() as _,
             uctx.arg2() as _,
         ),
-        #[cfg(target_arch = "x86_64")]
         Sysno::removexattr => sys_removexattr(uctx.arg0() as _, uctx.arg1() as _),
-        #[cfg(target_arch = "x86_64")]
         Sysno::lremovexattr => sys_lremovexattr(uctx.arg0() as _, uctx.arg1() as _),
         Sysno::fremovexattr => sys_fremovexattr(uctx.arg0() as _, uctx.arg1() as _),
 
