@@ -538,7 +538,7 @@ pub fn sys_renameat(
 }
 
 /// 尝试使用 ext4 的 direct_rename 来绕过 VFS ancestor 检查
-/// 返回 Some(result) 如果成功 downcast 到 ext4::Inode
+/// 返回 Some(result) 如果成功 downcast 到 ext4::Ext4Filesystem
 /// 返回 None 如果不是 ext4 或 downcast 失败
 fn try_ext4_direct_rename(
     old_dir: &axfs_ng_vfs::Location,
@@ -546,37 +546,35 @@ fn try_ext4_direct_rename(
     new_dir: &axfs_ng_vfs::Location,
     new_name: &str,
 ) -> Option<axfs_ng_vfs::VfsResult<()>> {
-    use axfs_ng::ext4::Inode;
+    use axfs_ng::ext4::Ext4Filesystem;
 
-    let old_dir_node = old_dir.entry().as_dir().ok()?;
-    let new_dir_node = new_dir.entry().as_dir().ok()?;
+    info!("[RENAME] Attempting ext4 direct_rename...");
+    info!("[RENAME] old_dir: inode={}, filesystem={}",
+          old_dir.inode(), old_dir.filesystem().name());
+    info!("[RENAME] new_dir: inode={}, filesystem={}",
+          new_dir.inode(), new_dir.filesystem().name());
 
-    info!("[RENAME] Attempting downcast to ext4::Inode...");
-
-    let old_downcast = old_dir_node.downcast::<Inode>();
-    let new_downcast = new_dir_node.downcast::<Inode>();
-
-    match (&old_downcast, &new_downcast) {
-        (Ok(_), Ok(_)) => {
-            info!("[RENAME] Downcast successful!");
-        }
-        (Err(_), _) => {
-            warn!("[RENAME] old_dir downcast to ext4::Inode failed");
-        }
-        (_, Err(_)) => {
-            warn!("[RENAME] new_dir downcast to ext4::Inode failed");
-        }
+    // 检查是否是 ext4 文件系统
+    if old_dir.filesystem().name() != "ext4" {
+        info!("[RENAME] Not ext4 filesystem (name={}), skipping direct_rename",
+              old_dir.filesystem().name());
+        return None;
     }
 
-    match (old_downcast, new_downcast) {
-        (Ok(old_inode), Ok(new_inode)) => {
-            info!("[RENAME] Using direct_rename to bypass VFS ancestor check");
-            Some(old_inode.direct_rename(old_name, new_inode.ino(), new_name))
-        }
-        _ => {
-            None
-        }
-    }
+    // SAFETY: 我们已经通过 name() == "ext4" 确认了文件系统类型
+    // Ext4Filesystem 是唯一返回 "ext4" 的实现
+    let ext4_fs = unsafe { Ext4Filesystem::from_ops_unchecked(old_dir.filesystem()) };
+
+    info!("[RENAME] Using Ext4Filesystem::direct_rename");
+    info!("[RENAME] Calling direct_rename: src={}:{}, dst={}:{}",
+          old_dir.inode(), old_name, new_dir.inode(), new_name);
+
+    Some(ext4_fs.direct_rename(
+        old_dir.inode() as u32,
+        old_name,
+        new_dir.inode() as u32,
+        new_name,
+    ))
 }
 
 
