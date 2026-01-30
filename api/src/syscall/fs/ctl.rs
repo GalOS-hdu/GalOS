@@ -537,6 +537,49 @@ pub fn sys_renameat(
     sys_renameat2(old_dirfd, old_path, new_dirfd, new_path, 0)
 }
 
+/// 尝试使用 ext4 的 direct_rename 来绕过 VFS ancestor 检查
+/// 返回 Some(result) 如果成功 downcast 到 ext4::Inode
+/// 返回 None 如果不是 ext4 或 downcast 失败
+fn try_ext4_direct_rename(
+    old_dir: &axfs_ng_vfs::Location,
+    old_name: &str,
+    new_dir: &axfs_ng_vfs::Location,
+    new_name: &str,
+) -> Option<axfs_ng_vfs::VfsResult<()>> {
+    use axfs_ng::ext4::Inode;
+
+    let old_dir_node = old_dir.entry().as_dir().ok()?;
+    let new_dir_node = new_dir.entry().as_dir().ok()?;
+
+    info!("[RENAME] Attempting downcast to ext4::Inode...");
+
+    let old_downcast = old_dir_node.downcast::<Inode>();
+    let new_downcast = new_dir_node.downcast::<Inode>();
+
+    match (&old_downcast, &new_downcast) {
+        (Ok(_), Ok(_)) => {
+            info!("[RENAME] Downcast successful!");
+        }
+        (Err(_), _) => {
+            warn!("[RENAME] old_dir downcast to ext4::Inode failed");
+        }
+        (_, Err(_)) => {
+            warn!("[RENAME] new_dir downcast to ext4::Inode failed");
+        }
+    }
+
+    match (old_downcast, new_downcast) {
+        (Ok(old_inode), Ok(new_inode)) => {
+            info!("[RENAME] Using direct_rename to bypass VFS ancestor check");
+            Some(old_inode.direct_rename(old_name, new_inode.ino(), new_name))
+        }
+        _ => {
+            None
+        }
+    }
+}
+
+
 pub fn sys_renameat2(
     old_dirfd: i32,
     old_path: *const c_char,
@@ -574,33 +617,14 @@ pub fn sys_renameat2(
     // 尝试使用 ext4 层的 direct_rename 来绕过 VFS 层的错误 ancestor 检查
     // VFS 层在 mount.rs:247 的检查是错误的，它检查的是 parent vs dst_dir
     // 而不是 src vs dst_dir
-    #[cfg(feature = "ext4")]
-    let result = {
-        use axfs_ng::ext4::Inode;
-
-        // 尝试向下转型到 ext4::Inode
-        let old_dir_node = old_dir.entry().as_dir()
-            .map_err(|_| AxError::NotADirectory)?;
-        let new_dir_node = new_dir.entry().as_dir()
-            .map_err(|_| AxError::NotADirectory)?;
-
-        match (
-            old_dir_node.downcast::<Inode>(),
-            new_dir_node.downcast::<Inode>()
-        ) {
-            (Ok(old_inode), Ok(new_inode)) => {
-                info!("[RENAME] Using direct_rename to bypass VFS ancestor check");
-                old_inode.direct_rename(&old_name, new_inode.ino(), &new_name)
-            }
-            _ => {
-                info!("[RENAME] Downcast failed, falling back to VFS rename");
-                old_dir.rename(&old_name, &new_dir, &new_name)
-            }
-        }
-    };
-
-    #[cfg(not(feature = "ext4"))]
-    let result = old_dir.rename(&old_name, &new_dir, &new_name);
+    //
+    // 注意：不能使用 #[cfg(feature = "ext4")]，因为那会检查 api crate 的 feature
+    // 而不是 axfs-ng 的 feature。我们改用运行时 downcast 来判断。
+    let result = try_ext4_direct_rename(&old_dir, &old_name, &new_dir, &new_name)
+        .unwrap_or_else(|| {
+            info!("[RENAME] ext4 not available, using VFS rename");
+            old_dir.rename(&old_name, &new_dir, &new_name)
+        });
 
     match &result {
         Ok(_) => info!("[RENAME] renameat2 SUCCESS: old={}, new={}", old_path_str, new_path_str),

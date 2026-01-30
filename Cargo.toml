@@ -112,6 +112,7 @@ qemu = [
     # auxilary features
     "axfeat/fs-times",
     "starry-api/dev-log",
+    "starry-api/ext4",  # Enable ext4-specific optimizations in syscall layer
 ]
 smp = ["axfeat/smp", "axplat-riscv64-visionfive2?/smp"]
 

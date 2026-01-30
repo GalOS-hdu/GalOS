@@ -12,6 +12,7 @@ input = ["dep:axinput"]
 memtrack = ["axfeat/backtrace", "axalloc/tracking", "dep:gimli"]
 vsock = ["axnet/vsock"]
 dev-log = []
+ext4 = []  # ext4 filesystem support (marker feature for conditional compilation)
 
 [dependencies]
 axalloc.workspace = true
