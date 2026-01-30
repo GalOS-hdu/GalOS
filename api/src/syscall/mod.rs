@@ -26,6 +26,13 @@ pub fn handle_syscall(uctx: &mut UserContext) {
         return;
     };
 
+    // Debug: log xattr syscalls
+    if matches!(sysno, Sysno::setxattr | Sysno::getxattr | Sysno::listxattr | Sysno::removexattr |
+                       Sysno::lsetxattr | Sysno::lgetxattr | Sysno::llistxattr | Sysno::lremovexattr |
+                       Sysno::fsetxattr | Sysno::fgetxattr | Sysno::flistxattr | Sysno::fremovexattr) {
+        warn!("DEBUG: xattr syscall {sysno:?} (number: {})", uctx.sysno());
+    }
+
     trace!("Syscall {sysno:?}");
 
     let result = match sysno {

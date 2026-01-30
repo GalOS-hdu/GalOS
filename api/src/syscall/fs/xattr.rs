@@ -119,6 +119,7 @@ pub fn sys_setxattr(
     size: usize,
     flags: c_int,
 ) -> AxResult<isize> {
+    warn!("DEBUG: sys_setxattr called");
     sys_fsetxattrat(AT_FDCWD, path, name, value, size, flags as u32, 0)
 }
 
@@ -170,6 +171,7 @@ fn sys_fsetxattrat(
     xattr_flags: u32,
     resolve_flags: u32,
 ) -> AxResult<isize> {
+    warn!("DEBUG: sys_fsetxattrat called, dirfd={}, size={}", dirfd, size);
     let path = path.nullable().map(vm_load_string).transpose()?;
     let name = vm_load_string(name)?;
     let mut value_buf_uninit: alloc::vec::Vec<core::mem::MaybeUninit<u8>> = alloc::vec![core::mem::MaybeUninit::uninit(); size];
@@ -182,15 +184,21 @@ fn sys_fsetxattrat(
 
     // Get file_like
     let file_like = if path.is_none() && resolve_flags & AT_EMPTY_PATH != 0 {
+        warn!("DEBUG: path is none, using fd");
         get_file_like(dirfd)?
     } else {
+        warn!("DEBUG: resolving path: {:?}", path);
         return with_fs(dirfd, |fs| {
+            warn!("DEBUG: inside with_fs");
             let loc = if resolve_flags & AT_SYMLINK_NOFOLLOW != 0 {
                 fs.resolve_no_follow(path.as_deref().unwrap_or(""))?
             } else {
                 fs.resolve(path.as_deref().unwrap_or(""))?
             };
-            loc.setxattr(&name, &value_buf, xattr_flags)?;
+            warn!("DEBUG: calling loc.setxattr");
+            let result = loc.setxattr(&name, &value_buf, xattr_flags);
+            warn!("DEBUG: loc.setxattr returned: {:?}", result);
+            result?;
             Ok(0)
         });
     };
