@@ -537,45 +537,6 @@ pub fn sys_renameat(
     sys_renameat2(old_dirfd, old_path, new_dirfd, new_path, 0)
 }
 
-/// 尝试使用 ext4 的 direct_rename 来绕过 VFS ancestor 检查
-/// 返回 Some(result) 如果成功 downcast 到 ext4::Ext4Filesystem
-/// 返回 None 如果不是 ext4 或 downcast 失败
-fn try_ext4_direct_rename(
-    old_dir: &axfs_ng_vfs::Location,
-    old_name: &str,
-    new_dir: &axfs_ng_vfs::Location,
-    new_name: &str,
-) -> Option<axfs_ng_vfs::VfsResult<()>> {
-    use axfs_ng::ext4::Ext4Filesystem;
-
-    info!("[RENAME] Attempting ext4 direct_rename...");
-    info!("[RENAME] old_dir: inode={}, filesystem={}",
-          old_dir.inode(), old_dir.filesystem().name());
-    info!("[RENAME] new_dir: inode={}, filesystem={}",
-          new_dir.inode(), new_dir.filesystem().name());
-
-    // 检查是否是 ext4 文件系统
-    if old_dir.filesystem().name() != "ext4" {
-        info!("[RENAME] Not ext4 filesystem (name={}), skipping direct_rename",
-              old_dir.filesystem().name());
-        return None;
-    }
-
-    // SAFETY: 我们已经通过 name() == "ext4" 确认了文件系统类型
-    // Ext4Filesystem 是唯一返回 "ext4" 的实现
-    let ext4_fs = unsafe { Ext4Filesystem::from_ops_unchecked(old_dir.filesystem()) };
-
-    info!("[RENAME] Using Ext4Filesystem::direct_rename");
-    info!("[RENAME] Calling direct_rename: src={}:{}, dst={}:{}",
-          old_dir.inode(), old_name, new_dir.inode(), new_name);
-
-    Some(ext4_fs.direct_rename(
-        old_dir.inode() as u32,
-        old_name,
-        new_dir.inode() as u32,
-        new_name,
-    ))
-}
 
 
 pub fn sys_renameat2(
@@ -612,17 +573,9 @@ pub fn sys_renameat2(
         new_name
     );
 
-    // 尝试使用 ext4 层的 direct_rename 来绕过 VFS 层的错误 ancestor 检查
-    // VFS 层在 mount.rs:247 的检查是错误的，它检查的是 parent vs dst_dir
-    // 而不是 src vs dst_dir
-    //
-    // 注意：不能使用 #[cfg(feature = "ext4")]，因为那会检查 api crate 的 feature
-    // 而不是 axfs-ng 的 feature。我们改用运行时 downcast 来判断。
-    let result = try_ext4_direct_rename(&old_dir, &old_name, &new_dir, &new_name)
-        .unwrap_or_else(|| {
-            info!("[RENAME] ext4 not available, using VFS rename");
-            old_dir.rename(&old_name, &new_dir, &new_name)
-        });
+    // VFS 层的 rename 现在已经修复了 ancestor 检查问题
+    // 直接使用 VFS 层的 rename 即可
+    let result = old_dir.rename(&old_name, &new_dir, &new_name);
 
     match &result {
         Ok(_) => info!("[RENAME] renameat2 SUCCESS: old={}, new={}", old_path_str, new_path_str),
