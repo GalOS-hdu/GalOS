@@ -416,6 +416,7 @@ dependencies = [
 [[package]]
 name = "axfs-ng-vfs"
 version = "0.1.0"
+source = "git+https://github.com/GalOS-hdu/axfs-ng-vfs.git?rev=dc8ccde#dc8ccde3382c90ab5a036814f35511509a3bdb29"
 dependencies = [
  "axerrno 0.2.2",
  "axpoll",
