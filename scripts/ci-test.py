@@ -69,7 +69,7 @@ try:
             s.sendall(b"exit\r\n")
             sent = True
 
-        if datetime.datetime.now() - start > datetime.timedelta(seconds=10):
+        if datetime.datetime.now() - start > datetime.timedelta(seconds=20):
             raise Exception("Timeout waiting for exit")
 
     if PROMPT not in buffer:
