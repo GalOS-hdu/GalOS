@@ -1,5 +1,5 @@
 extern crate alloc;
-use alloc::{borrow::Cow, string::ToString, sync::Arc};
+use alloc::{borrow::Cow, format, string::ToString, sync::Arc};
 use core::{
     any::Any,
     ffi::c_int,
@@ -22,8 +22,10 @@ use crate::file::{SealedBuf, SealedBufMut};
 pub fn with_fs<R>(dirfd: c_int, f: impl FnOnce(&mut FsContext) -> AxResult<R>) -> AxResult<R> {
     let mut fs = FS_CONTEXT.lock();
     if dirfd == AT_FDCWD {
+        debug!("[with_fs] AT_FDCWD, cwd={:?}", fs.current_dir());
         f(&mut fs)
     } else {
+        debug!("[with_fs] dirfd={}", dirfd);
         let dir = Directory::from_fd(dirfd)?.inner.clone();
         f(&mut fs.with_current_dir(dir)?)
     }
@@ -54,26 +56,46 @@ pub fn resolve_at(dirfd: c_int, path: Option<&str>, flags: u32) -> AxResult<Reso
     match path {
         Some("") | None => {
             if flags & AT_EMPTY_PATH == 0 {
+                debug!("[resolve_at] Empty path but AT_EMPTY_PATH not set");
                 return Err(AxError::NotFound);
             }
+            debug!("[resolve_at] Empty path with AT_EMPTY_PATH, dirfd={}, flags={:#x}", dirfd, flags);
             let file_like = get_file_like(dirfd)?;
+            debug!("[resolve_at] Got file_like");
             let f = file_like.clone().into_any();
             Ok(if let Some(file) = f.downcast_ref::<File>() {
-                ResolveAtResult::File(file.inner().backend()?.location().clone())
+                debug!("[resolve_at] Downcast to File succeeded");
+                match file.inner().backend() {
+                    Ok(backend) => {
+                        debug!("[resolve_at] backend() succeeded");
+                        ResolveAtResult::File(backend.location().clone())
+                    }
+                    Err(e) => {
+                        warn!("[resolve_at] backend() failed: {:?}", e);
+                        return Err(e);
+                    }
+                }
             } else if let Some(dir) = f.downcast_ref::<Directory>() {
+                debug!("[resolve_at] Downcast to Directory succeeded");
                 ResolveAtResult::File(dir.inner().clone())
             } else {
+                debug!("[resolve_at] Downcast failed, returning Other");
                 ResolveAtResult::Other(file_like)
             })
         }
-        Some(path) => with_fs(dirfd, |fs| {
-            if flags & AT_SYMLINK_NOFOLLOW != 0 {
-                fs.resolve_no_follow(path)
-            } else {
-                fs.resolve(path)
-            }
-            .map(ResolveAtResult::File)
-        }),
+        Some(path) => {
+            debug!("[resolve_at] Non-empty path: {:?}, dirfd={}, flags={:#x}", path, dirfd, flags);
+            with_fs(dirfd, |fs| {
+                debug!("[resolve_at] Calling fs.resolve({:?}), cwd={:?}", path, fs.current_dir());
+                let result = if flags & AT_SYMLINK_NOFOLLOW != 0 {
+                    fs.resolve_no_follow(path)
+                } else {
+                    fs.resolve(path)
+                };
+                debug!("[resolve_at] fs.resolve result: {:?}", result.as_ref().map(|_| "Ok").map_err(|e| format!("{:?}", e)));
+                result.map(ResolveAtResult::File)
+            })
+        }
     }
 }
 

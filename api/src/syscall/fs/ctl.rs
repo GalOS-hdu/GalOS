@@ -425,7 +425,15 @@ fn update_times(
     mtime: Option<Duration>,
     flags: u32,
 ) -> AxResult<()> {
-    let path = path.nullable().map(vm_load_string).transpose()?;
+    debug!("[update_times] dirfd={}, path.is_null()={}, flags={:#x}", dirfd, path.is_null(), flags);
+    let path = if path.is_null() {
+        debug!("[update_times] path is NULL, setting to None");
+        None
+    } else {
+        debug!("[update_times] path is not NULL, loading string");
+        Some(vm_load_string(path)?)
+    };
+    debug!("[update_times] path={:?}, calling resolve_at", path);
     resolve_at(dirfd, path.as_deref(), flags)?
         .into_file()
         .ok_or(AxError::BadFileDescriptor)?
@@ -511,12 +519,36 @@ pub fn sys_utimensat(
         return Ok(0);
     }
 
-    let path_str = path.nullable().map(vm_load_string).transpose()?;
+    let path_str = if path.is_null() {
+        None
+    } else {
+        Some(vm_load_string(path)?)
+    };
+
+    debug!(
+        "[UTIMENS] utimensat: dirfd={}, path={:?}, atime={:?}, mtime={:?}, flags={:#x}",
+        dirfd, path_str, atime, mtime, flags
+    );
+
     let result = update_times(dirfd, path, atime, mtime, flags);
 
     match &result {
-        Ok(_) => info!("[UTIMENS] utimensat SUCCESS: path={:?}", path_str),
-        Err(e) => warn!("[UTIMENS] utimensat FAILED: path={:?}, error={:?}", path_str, e),
+        Ok(_) => info!(
+            "[UTIMENS] utimensat SUCCESS: dirfd={}, path={:?}",
+            dirfd, path_str
+        ),
+        Err(AxError::NotFound) => {
+            // NotFound是正常情况（文件不存在），不是错误
+            // 通常发生在touch等命令中，先尝试utimensat，失败后再创建文件
+            debug!(
+                "[UTIMENS] utimensat: file not found (expected for new files): dirfd={}, path={:?}",
+                dirfd, path_str
+            )
+        }
+        Err(e) => warn!(
+            "[UTIMENS] utimensat FAILED: dirfd={}, path={:?}, error={:?}",
+            dirfd, path_str, e
+        ),
     }
 
     result?;
