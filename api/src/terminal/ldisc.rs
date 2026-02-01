@@ -344,7 +344,10 @@ impl<R: TtyRead, W: TtyWrite> LineDiscipline<R, W> {
         } else {
             let vtime = term.special_char(VTIME);
             if vtime > 0 {
-                todo!();
+                // TODO: Implement VTIME (inter-character timer) support
+                // For now, treat VTIME > 0 the same as VTIME = 0 (no timeout)
+                // This means we only respect VMIN and ignore timing requirements
+                warn!("VTIME > 0 not fully supported, treating as VTIME = 0");
             }
             term.special_char(VMIN) as usize
         };

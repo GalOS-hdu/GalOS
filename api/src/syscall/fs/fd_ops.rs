@@ -134,9 +134,9 @@ pub fn sys_openat(
 
     if let Some(p) = path_for_log {
         match &result {
-            Ok(fd) => info!("[OPEN] openat SUCCESS: fd={}, path={}", fd, p),
+            Ok(fd) => info!("[OPEN] openat SUCCESS: fd={fd}, path={p}"),
             // prepare for contest replace warn with info
-            Err(e) => info!("[OPEN] openat FAILED: path={}, error={:?}", p, e),
+            Err(e) => info!("[OPEN] openat FAILED: path={p}, error={e:?}"),
         }
     }
 
@@ -157,8 +157,8 @@ pub fn sys_close(fd: c_int) -> AxResult<isize> {
     let result = close_file_like(fd);
 
     match &result {
-        Ok(_) => debug!("[CLOSE] sys_close SUCCESS: fd={}", fd),
-        Err(e) => warn!("[CLOSE] sys_close FAILED: fd={}, error={:?}", fd, e),
+        Ok(_) => debug!("[CLOSE] sys_close SUCCESS: fd={fd}"),
+        Err(e) => warn!("[CLOSE] sys_close FAILED: fd={fd}, error={e:?}"),
     }
 
     result?;

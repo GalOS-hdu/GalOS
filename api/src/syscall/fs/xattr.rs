@@ -171,7 +171,7 @@ fn sys_fsetxattrat(
     xattr_flags: u32,
     resolve_flags: u32,
 ) -> AxResult<isize> {
-    warn!("DEBUG: sys_fsetxattrat called, dirfd={}, size={}", dirfd, size);
+    warn!("DEBUG: sys_fsetxattrat called, dirfd={dirfd}, size={size}");
     let path = path.nullable().map(vm_load_string).transpose()?;
     let name = vm_load_string(name)?;
     let mut value_buf_uninit: alloc::vec::Vec<core::mem::MaybeUninit<u8>> = alloc::vec![core::mem::MaybeUninit::uninit(); size];
@@ -187,7 +187,7 @@ fn sys_fsetxattrat(
         warn!("DEBUG: path is none, using fd");
         get_file_like(dirfd)?
     } else {
-        warn!("DEBUG: resolving path: {:?}", path);
+        warn!("DEBUG: resolving path: {path:?}");
         return with_fs(dirfd, |fs| {
             warn!("DEBUG: inside with_fs");
             let loc = if resolve_flags & AT_SYMLINK_NOFOLLOW != 0 {
@@ -197,7 +197,7 @@ fn sys_fsetxattrat(
             };
             warn!("DEBUG: calling loc.setxattr");
             let result = loc.setxattr(&name, &value_buf, xattr_flags);
-            warn!("DEBUG: loc.setxattr returned: {:?}", result);
+            warn!("DEBUG: loc.setxattr returned: {result:?}");
             result?;
             Ok(0)
         });

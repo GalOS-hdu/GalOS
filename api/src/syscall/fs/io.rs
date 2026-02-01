@@ -20,18 +20,26 @@ use crate::{
     mm::{UserConstPtr, VmBytes, VmBytesMut},
 };
 
+/// Dummy file descriptor for unsupported operations.
+///
+/// This is used as a placeholder when a system call creates a file descriptor
+/// but the actual operation is not supported. Operations on this fd will fail
+/// with EBADFD error.
 struct DummyFd;
 impl FileLike for DummyFd {
     fn read(&self, _dst: &mut SealedBufMut) -> AxResult<usize> {
-        unimplemented!()
+        // DummyFd cannot be read
+        Err(AxError::BadFileDescriptor)
     }
 
     fn write(&self, _src: &mut SealedBuf) -> AxResult<usize> {
-        unimplemented!()
+        // DummyFd cannot be written
+        Err(AxError::BadFileDescriptor)
     }
 
     fn stat(&self) -> AxResult<crate::file::Kstat> {
-        unimplemented!()
+        // DummyFd cannot be stat'd
+        Err(AxError::BadFileDescriptor)
     }
 
     fn path(&self) -> Cow<str> {
@@ -85,8 +93,8 @@ pub fn sys_write(fd: i32, buf: *mut u8, len: usize) -> AxResult<isize> {
     debug!("sys_write <= fd: {fd}, buf: {buf:p}, len: {len}");
     let result = get_file_like(fd)?.write(&mut VmBytes::new(buf, len).into());
     match &result {
-        Ok(written) if len > 1024 => info!("[WRITE] write SUCCESS: fd={fd}, written={}", written),
-        Err(e) if len > 1024 => warn!("[WRITE] write FAILED: fd={fd}, len={len}, error={:?}", e),
+        Ok(written) if len > 1024 => info!("[WRITE] write SUCCESS: fd={fd}, written={written}"),
+        Err(e) if len > 1024 => warn!("[WRITE] write FAILED: fd={fd}, len={len}, error={e:?}"),
         _ => {}
     }
     Ok(result? as _)
@@ -155,8 +163,8 @@ pub fn sys_fsync(fd: c_int) -> AxResult<isize> {
     let result = f.inner().sync(false);
 
     match &result {
-        Ok(_) => debug!("[FSYNC] fsync SUCCESS: fd={}", fd),
-        Err(e) => warn!("[FSYNC] fsync FAILED: fd={}, error={:?}", fd, e),
+        Ok(_) => debug!("[FSYNC] fsync SUCCESS: fd={fd}"),
+        Err(e) => warn!("[FSYNC] fsync FAILED: fd={fd}, error={e:?}"),
     }
 
     result?;
@@ -169,8 +177,8 @@ pub fn sys_fdatasync(fd: c_int) -> AxResult<isize> {
     let result = f.inner().sync(true);
 
     match &result {
-        Ok(_) => debug!("[FDATASYNC] fdatasync SUCCESS: fd={}", fd),
-        Err(e) => warn!("[FDATASYNC] fdatasync FAILED: fd={}, error={:?}", fd, e),
+        Ok(_) => debug!("[FDATASYNC] fdatasync SUCCESS: fd={fd}"),
+        Err(e) => warn!("[FDATASYNC] fdatasync FAILED: fd={fd}, error={e:?}"),
     }
 
     result?;

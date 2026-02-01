@@ -218,11 +218,11 @@ pub fn sys_linkat(
     let (new_dir, new_name) =
         with_fs(new_dirfd, |fs| fs.resolve_nonexistent(Path::new(&new_path_str)))?;
 
-    let result = new_dir.link(new_name.clone(), &old);
+    let result = new_dir.link(new_name, &old);
 
     match &result {
-        Ok(_) => info!("[LINK] linkat SUCCESS: old={:?}, new={}/{:?}", old_path_str, new_path_str, new_name),
-        Err(e) => warn!("[LINK] linkat FAILED: old={:?}, new={}/{:?}, error={:?}", old_path_str, new_path_str, new_name, e),
+        Ok(_) => info!("[LINK] linkat SUCCESS: old={old_path_str:?}, new={new_path_str}/{new_name:?}"),
+        Err(e) => warn!("[LINK] linkat FAILED: old={old_path_str:?}, new={new_path_str}/{new_name:?}, error={e:?}"),
     }
 
     result?;
@@ -305,9 +305,9 @@ pub fn sys_symlinkat(
     });
 
     match &result {
-        Ok(_) => info!("[SYMLINK] symlinkat SUCCESS: target={}, linkpath={}", target, linkpath),
+        Ok(_) => info!("[SYMLINK] symlinkat SUCCESS: target={target}, linkpath={linkpath}"),
         // prepare for contest replace warn with info
-        Err(e) => info!("[SYMLINK] symlinkat FAILED: target={}, linkpath={}, error={:?}", target, linkpath, e),
+        Err(e) => info!("[SYMLINK] symlinkat FAILED: target={target}, linkpath={linkpath}, error={e:?}"),
     }
 
     result
@@ -382,8 +382,8 @@ pub fn sys_fchownat(
     });
 
     match &result {
-        Ok(_) => info!("[CHOWN] fchownat SUCCESS: path={:?}, uid={}, gid={}", path_str, uid, gid),
-        Err(e) => warn!("[CHOWN] fchownat FAILED: path={:?}, uid={}, gid={}, error={:?}", path_str, uid, gid, e),
+        Ok(_) => info!("[CHOWN] fchownat SUCCESS: path={path_str:?}, uid={uid}, gid={gid}"),
+        Err(e) => warn!("[CHOWN] fchownat FAILED: path={path_str:?}, uid={uid}, gid={gid}, error={e:?}"),
     }
 
     result?;
@@ -410,8 +410,8 @@ pub fn sys_fchmodat(dirfd: i32, path: *const c_char, mode: u32, flags: u32) -> A
         });
 
     match &result {
-        Ok(_) => info!("[CHMOD] fchmodat SUCCESS: path={:?}, mode={:#o}", path, mode),
-        Err(e) => warn!("[CHMOD] fchmodat FAILED: path={:?}, mode={:#o}, error={:?}", path, mode, e),
+        Ok(_) => info!("[CHMOD] fchmodat SUCCESS: path={path:?}, mode={mode:#o}"),
+        Err(e) => warn!("[CHMOD] fchmodat FAILED: path={path:?}, mode={mode:#o}, error={e:?}"),
     }
 
     result?;
@@ -433,7 +433,7 @@ fn update_times(
         debug!("[update_times] path is not NULL, loading string");
         Some(vm_load_string(path)?)
     };
-    debug!("[update_times] path={:?}, calling resolve_at", path);
+    debug!("[update_times] path={path:?}, calling resolve_at");
     resolve_at(dirfd, path.as_deref(), flags)?
         .into_file()
         .ok_or(AxError::BadFileDescriptor)?
@@ -526,28 +526,24 @@ pub fn sys_utimensat(
     };
 
     debug!(
-        "[UTIMENS] utimensat: dirfd={}, path={:?}, atime={:?}, mtime={:?}, flags={:#x}",
-        dirfd, path_str, atime, mtime, flags
+        "[UTIMENS] utimensat: dirfd={dirfd}, path={path_str:?}, atime={atime:?}, mtime={mtime:?}, flags={flags:#x}"
     );
 
     let result = update_times(dirfd, path, atime, mtime, flags);
 
     match &result {
         Ok(_) => info!(
-            "[UTIMENS] utimensat SUCCESS: dirfd={}, path={:?}",
-            dirfd, path_str
+            "[UTIMENS] utimensat SUCCESS: dirfd={dirfd}, path={path_str:?}"
         ),
         Err(AxError::NotFound) => {
             // NotFound是正常情况（文件不存在），不是错误
             // 通常发生在touch等命令中，先尝试utimensat，失败后再创建文件
             debug!(
-                "[UTIMENS] utimensat: file not found (expected for new files): dirfd={}, path={:?}",
-                dirfd, path_str
+                "[UTIMENS] utimensat: file not found (expected for new files): dirfd={dirfd}, path={path_str:?}"
             )
         }
         Err(e) => warn!(
-            "[UTIMENS] utimensat FAILED: dirfd={}, path={:?}, error={:?}",
-            dirfd, path_str, e
+            "[UTIMENS] utimensat FAILED: dirfd={dirfd}, path={path_str:?}, error={e:?}"
         ),
     }
 
@@ -610,8 +606,8 @@ pub fn sys_renameat2(
     let result = old_dir.rename(&old_name, &new_dir, &new_name);
 
     match &result {
-        Ok(_) => info!("[RENAME] renameat2 SUCCESS: old={}, new={}", old_path_str, new_path_str),
-        Err(e) => warn!("[RENAME] renameat2 FAILED: old={}, new={}, error={:?}", old_path_str, new_path_str, e),
+        Ok(_) => info!("[RENAME] renameat2 SUCCESS: old={old_path_str}, new={new_path_str}"),
+        Err(e) => warn!("[RENAME] renameat2 FAILED: old={old_path_str}, new={new_path_str}, error={e:?}"),
     }
 
     result?;

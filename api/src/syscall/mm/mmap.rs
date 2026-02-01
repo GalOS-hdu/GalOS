@@ -252,7 +252,7 @@ pub fn sys_mmap(
 
     match &result {
         Ok(_) => info!("[MMAP] mmap SUCCESS: addr={:#x}", start.as_usize()),
-        Err(e) => warn!("[MMAP] mmap FAILED: error={:?}", e),
+        Err(e) => warn!("[MMAP] mmap FAILED: error={e:?}"),
     }
 
     result?;

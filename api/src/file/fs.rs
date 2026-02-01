@@ -25,7 +25,7 @@ pub fn with_fs<R>(dirfd: c_int, f: impl FnOnce(&mut FsContext) -> AxResult<R>) -
         debug!("[with_fs] AT_FDCWD, cwd={:?}", fs.current_dir());
         f(&mut fs)
     } else {
-        debug!("[with_fs] dirfd={}", dirfd);
+        debug!("[with_fs] dirfd={dirfd}");
         let dir = Directory::from_fd(dirfd)?.inner.clone();
         f(&mut fs.with_current_dir(dir)?)
     }
@@ -59,7 +59,7 @@ pub fn resolve_at(dirfd: c_int, path: Option<&str>, flags: u32) -> AxResult<Reso
                 debug!("[resolve_at] Empty path but AT_EMPTY_PATH not set");
                 return Err(AxError::NotFound);
             }
-            debug!("[resolve_at] Empty path with AT_EMPTY_PATH, dirfd={}, flags={:#x}", dirfd, flags);
+            debug!("[resolve_at] Empty path with AT_EMPTY_PATH, dirfd={dirfd}, flags={flags:#x}");
             let file_like = get_file_like(dirfd)?;
             debug!("[resolve_at] Got file_like");
             let f = file_like.clone().into_any();
@@ -71,7 +71,7 @@ pub fn resolve_at(dirfd: c_int, path: Option<&str>, flags: u32) -> AxResult<Reso
                         ResolveAtResult::File(backend.location().clone())
                     }
                     Err(e) => {
-                        warn!("[resolve_at] backend() failed: {:?}", e);
+                        warn!("[resolve_at] backend() failed: {e:?}");
                         return Err(e);
                     }
                 }
@@ -84,7 +84,7 @@ pub fn resolve_at(dirfd: c_int, path: Option<&str>, flags: u32) -> AxResult<Reso
             })
         }
         Some(path) => {
-            debug!("[resolve_at] Non-empty path: {:?}, dirfd={}, flags={:#x}", path, dirfd, flags);
+            debug!("[resolve_at] Non-empty path: {path:?}, dirfd={dirfd}, flags={flags:#x}");
             with_fs(dirfd, |fs| {
                 debug!("[resolve_at] Calling fs.resolve({:?}), cwd={:?}", path, fs.current_dir());
                 let result = if flags & AT_SYMLINK_NOFOLLOW != 0 {
@@ -92,7 +92,7 @@ pub fn resolve_at(dirfd: c_int, path: Option<&str>, flags: u32) -> AxResult<Reso
                 } else {
                     fs.resolve(path)
                 };
-                debug!("[resolve_at] fs.resolve result: {:?}", result.as_ref().map(|_| "Ok").map_err(|e| format!("{:?}", e)));
+                debug!("[resolve_at] fs.resolve result: {:?}", result.as_ref().map(|_| "Ok").map_err(|e| format!("{e:?}")));
                 result.map(ResolveAtResult::File)
             })
         }
@@ -148,9 +148,7 @@ impl File {
     pub fn listxattr(&self, buffer: &mut [u8]) -> AxResult<usize> {
         self.inner
             .location()
-            .listxattr(buffer)
-            .map_err(AxError::from)
-    }
+            .listxattr(buffer)}
 
     /// Gets the value of an extended attribute.
     ///
@@ -162,9 +160,7 @@ impl File {
     pub fn getxattr(&self, name: &str, buffer: &mut [u8]) -> AxResult<usize> {
         self.inner
             .location()
-            .getxattr(name, buffer)
-            .map_err(AxError::from)
-    }
+            .getxattr(name, buffer)}
 
     /// Sets the value of an extended attribute.
     ///
@@ -175,9 +171,7 @@ impl File {
     pub fn setxattr(&self, name: &str, value: &[u8], flags: u32) -> AxResult<()> {
         self.inner
             .location()
-            .setxattr(name, value, flags)
-            .map_err(AxError::from)
-    }
+            .setxattr(name, value, flags)}
 
     /// Removes an extended attribute.
     ///
@@ -186,9 +180,7 @@ impl File {
     pub fn removexattr(&self, name: &str) -> AxResult<()> {
         self.inner
             .location()
-            .removexattr(name)
-            .map_err(AxError::from)
-    }
+            .removexattr(name)}
 }
 
 fn path_for(loc: &Location) -> Cow<'static, str> {
@@ -290,25 +282,20 @@ impl Directory {
 
     /// Lists all extended attribute names.
     pub fn listxattr(&self, buffer: &mut [u8]) -> AxResult<usize> {
-        self.inner.listxattr(buffer).map_err(AxError::from)
-    }
+        self.inner.listxattr(buffer)}
 
     /// Gets the value of an extended attribute.
     pub fn getxattr(&self, name: &str, buffer: &mut [u8]) -> AxResult<usize> {
-        self.inner.getxattr(name, buffer).map_err(AxError::from)
-    }
+        self.inner.getxattr(name, buffer)}
 
     /// Sets the value of an extended attribute.
     pub fn setxattr(&self, name: &str, value: &[u8], flags: u32) -> AxResult<()> {
         self.inner
-            .setxattr(name, value, flags)
-            .map_err(AxError::from)
-    }
+            .setxattr(name, value, flags)}
 
     /// Removes an extended attribute.
     pub fn removexattr(&self, name: &str) -> AxResult<()> {
-        self.inner.removexattr(name).map_err(AxError::from)
-    }
+        self.inner.removexattr(name)}
 }
 
 impl FileLike for Directory {
